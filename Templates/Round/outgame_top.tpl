@@ -48,8 +48,12 @@
 		<td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
 		<td><a href="anleitung.php"><span><?php echo PUBLIC_MANUAL; ?></span></a></td>
 		<td><a href="guide.php"><span><?php echo RND_GUIDE; ?></span></a></td>
+<?php if (!empty($rndLoggedIn)) { ?>
+		<td><a href="logout.php"><span><?php echo LOGOUT; ?></span></a></td>
+<?php } else { ?>
 		<td><a href="index.php?signup"><span><?php echo PUBLIC_REGISTER; ?></span></a></td>
 		<td><a href="index.php?login"><span><?php echo LOGIN; ?></span></a></td>
+<?php } ?>
 	</tr>
 	</table>
 </div>

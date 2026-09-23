@@ -34,6 +34,7 @@ if (RoundControl::isWindowOpen() || RoundControl::isStaff($session->access, $ses
 $now         = time();
 $nextOpen    = RoundControl::nextWindowStart($now);
 $rndPageTitle = RND_WAIT_TITLE;
+$rndLoggedIn  = true;   // top nav: Guide / Logout instead of Register / Login
 
 include("Templates/Round/outgame_top.tpl");
 ?>
