@@ -54,6 +54,7 @@ include_once("../GameEngine/Artifacts.php");
 include_once("../GameEngine/MultiAccount.php");
 include_once("../GameEngine/PushProtection.php");
 include_once("../GameEngine/RegBlock.php");
+include_once("../GameEngine/RoundControl.php");
 include_once("../GameEngine/Heatmap.php");
 include_once("../GameEngine/GoldShop.php");
 include_once("../GameEngine/QuestConfig.php");
@@ -117,6 +118,7 @@ function admin_validated_page(string $raw): string
         'heatmap',
         'goldShop',
         'questEditor',
+        'roundSettings',
     ];
 
     return in_array($raw, $whitelist, true) ? $raw : '';
@@ -208,6 +210,10 @@ if ($page !== '') {
 
         case 'questEditor':
             $subpage = ADMIN_QUEST_EDITOR;
+            break;
+
+        case 'roundSettings':
+            $subpage = ADMIN_ROUND_SETTINGS;
             break;
 
         case 'massmessage':
@@ -893,6 +899,7 @@ body.app #menu li.sub ul li a:hover{color:#d97706!important}
                                 <li><a href="?p=heatmap"><font color="Red"><b><?php echo ADMIN_WORLD_MAP_HEATMAP; ?></b></font></a></li>
                                 <li><a href="?p=debug_log"><?php echo ADMIN_DEBUG_ERROR_LOG; ?></a></li>
                                 <li><a href="?p=config"><?php echo ADMIN_SERVER_SETTINGS; ?></a></li>
+                                <li><a href="?p=roundSettings"><font color="Red"><b><?php echo ADMIN_ROUND_SETTINGS; ?></b></font></a></li>
                                 <li><a href="?p=maintenance"><?php echo ADMIN_SERVER_MAINTENANCE; ?></a></li>
                                 <li><a href="?p=resetServer"><?php echo ADMIN_SERVER_RESETTING; ?></a></li>
                             </ul>
