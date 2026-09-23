@@ -104,7 +104,8 @@ They appear on <b><?php echo date($fmt, $artifacts); ?></b> in Natar villages sp
 	<p><b>Scoring:</b> small artifact = <b>1 point</b>, great artifact = <b>2 points</b>, unique artifact = <b>3 points</b>.</p>
 	<p>At the round end (<b><?php echo date($fmt, $end); ?></b>) the artifact holders are frozen. The player with the highest
 		score wins; alliances are ranked by the total score of their members. Population is shown as secondary information.
-		<a href="results.php">Current standings / results</a>.</p>
+		The holders are not published while the round runs; the <a href="results.php">results</a> appear right after the end.</p>
+	<p><?php echo RND_RESULTS_TIEBREAK; ?></p>
 </div>
 
 <h2 id="dates">3. Key dates</h2>

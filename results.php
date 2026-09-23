@@ -32,20 +32,18 @@ $now     = time();
 $ended   = RoundControl::isRoundOver($now);
 $roundEnd = RoundControl::roundEnd();
 
-// The automation takes the snapshot at the end; this is only the fallback for
-// the first visitor if cron has not run yet since the end.
-if ($ended && RoundControl::getSnapshot() === null) {
-	RoundControl::takeFinalSnapshot($now);
-}
-
+// Only the automation takes the snapshot (first tick after the end, before
+// troop movements are processed). Nothing is shown before it exists: while
+// the round runs the artifact holders stay secret, and right after the end
+// the page says the results are being finalised.
 $snapshot  = $ended ? RoundControl::getSnapshot() : null;
-$standings = $snapshot !== null ? $snapshot : RoundControl::collectStandings();
+$standings = $snapshot !== null ? $snapshot : ['artifacts' => [], 'population' => []];
 $ranking   = RoundControl::rank($standings);
 
-$natarsHeld = 0;
+$unscored = 0;
 foreach ($standings['artifacts'] as $art) {
-	if ((int) $art['owner'] <= 5) {
-		$natarsHeld++;
+	if (!RoundControl::isScored($art)) {
+		$unscored++;
 	}
 }
 
@@ -61,7 +59,12 @@ include("Templates/Round/outgame_top.tpl");
 <h1><?php echo rnd_h($rndPageTitle); ?></h1>
 
 <div class="rnd-box">
-<?php if ($ended) { ?>
+<?php if (!$ended) { ?>
+	<p id="rnd_in_progress"><?php echo sprintf(RND_RESULTS_RUNNING, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?>
+	(<span class="rnd-countdown" data-left="<?php echo (int) max(0, $roundEnd - $now); ?>" data-done-url="results.php"></span>)</p>
+<?php } elseif ($snapshot === null) { ?>
+	<p id="rnd_finalising"><?php echo sprintf(RND_RESULTS_FINALISING, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?></p>
+<?php } else { ?>
 	<p><?php echo sprintf(RND_RESULTS_ENDED, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?></p>
 <?php     if (!empty($ranking['players'])) { ?>
 	<p class="rnd-big" id="rnd_winner"><?php echo sprintf(RND_RESULTS_WINNER, rnd_h($ranking['players'][0]['username'])); ?></p>
@@ -69,13 +72,12 @@ include("Templates/Round/outgame_top.tpl");
 <?php     if (!empty($ranking['alliances'])) { ?>
 	<p><b><?php echo sprintf(RND_RESULTS_WINNER_ALLY, rnd_h($ranking['alliances'][0]['tag'])); ?></b></p>
 <?php     } ?>
-<?php } else { ?>
-	<p><?php echo sprintf(RND_RESULTS_RUNNING, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?>
-	(<span class="rnd-countdown" data-left="<?php echo (int) max(0, $roundEnd - $now); ?>" data-done-url="results.php"></span>)</p>
 <?php } ?>
 	<p><?php echo RND_RESULTS_SCORING; ?></p>
+	<p id="rnd_tiebreak"><?php echo RND_RESULTS_TIEBREAK; ?></p>
 </div>
 
+<?php if ($snapshot !== null) { ?>
 <h2><?php echo RND_RESULTS_PLAYERS; ?></h2>
 <?php if (empty($ranking['players'])) { ?>
 <p><?php echo RND_RESULTS_NONE; ?></p>
@@ -123,8 +125,8 @@ include("Templates/Round/outgame_top.tpl");
 <?php     } ?>
 </table>
 <?php } ?>
-<?php if ($natarsHeld > 0) { ?>
-<p class="rnd-muted"><?php echo sprintf(RND_RESULTS_NATARS, $natarsHeld); ?></p>
+<?php if ($unscored > 0) { ?>
+<p class="rnd-muted" id="rnd_unscored"><?php echo sprintf(RND_RESULTS_NATARS, $unscored); ?></p>
 <?php } ?>
 
 <?php if (!empty($ranking['alliances'])) { ?>
@@ -175,9 +177,8 @@ include("Templates/Round/outgame_top.tpl");
 </table>
 <?php } ?>
 
-<?php if ($snapshot !== null) { ?>
 <p class="rnd-muted"><?php echo sprintf(RND_RESULTS_SNAPSHOT, date('d.m.Y H:i', (int) $snapshot['taken_at'])); ?></p>
-<?php } ?>
+<?php } // snapshot ?>
 <?php if ($ended) { ?>
 <p><?php echo RND_RESULTS_VIEW_ONLY; ?>
 	<a href="karte.php"><?php echo MAP; ?></a> |
