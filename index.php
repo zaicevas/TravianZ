@@ -50,6 +50,7 @@ else
 }
 
 include_once "GameEngine/Database.php";
+include_once "GameEngine/RoundControl.php";
 require_once __DIR__ . "/GameEngine/Lang/loader.php";
 tz_load_language(LANG);
 
@@ -73,6 +74,14 @@ AccessLogger::logRequest();
 		<!-- li.c3 {background-image:url('img/en/welten/en1_big_g.jpg');} -->
 		div.c2 {left:237px;}
 		ul.c1 {position:absolute; left:0px; width: 686px;}
+		#server_info {padding-top:10px; padding-bottom:6px;}
+		#server_info h2 {font-size:15px; line-height:20px; margin-bottom:5px;}
+		#server_info table {border-spacing:0; width:100%;}
+		#server_info th, #server_info td {padding:1px 0; font-size:11px; line-height:16px; vertical-align:top;}
+		#server_info th {text-align:left; font-weight:normal; color:#555; width:48%;}
+		#server_info td {font-weight:bold; color:#333;}
+		#server_info .sep th {padding-top:6px; color:#71d000; font-weight:bold;}
+		#server_info p {margin:6px 0 0; font-size:11px;}
 	</style>
 </head>
 
@@ -93,7 +102,7 @@ AccessLogger::logRequest();
 				<tr>
 					<td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
 					<td><a href="anleitung.php"><span><?php echo $lang['index'][0][2]; ?></span></a></td>
-					<td><a href="https://github.com/Shadowss/TravianZ/discussions" target="_blank"><span><?php echo FORUM; ?></span></a></td>
+					<td><a href="guide.php"><span><?php echo RND_GUIDE; ?></span></a></td>
 					<td><a href="?signup" class="signup_link mark"><span><?php echo $lang['register']; ?></span></a></td>
 					<td><a href="?login" class="login_link"><span><?php echo LOGIN; ?></span></a></td>
 				</tr>
@@ -168,6 +177,53 @@ AccessLogger::logRequest();
 								</tr>
 							</tbody>
 						</table>
+					</div>
+					<?php
+					// Server information box (round settings from RoundControl, speeds from config.php)
+					$rcStats = ['villages' => 0, 'pop' => 0];
+					$return = mysqli_query($link, "SELECT COUNT(v.wref) AS villages, IFNULL(SUM(v.pop), 0) AS pop FROM " . TB_PREFIX . "vdata v JOIN " . TB_PREFIX . "users u ON u.id = v.owner WHERE u.id > 5 AND u.tribe IN(1, 2, 3, 6, 7, 8, 9)");
+					if (!empty($return)) {
+						$rcStats = mysqli_fetch_assoc($return);
+					}
+					$rcGoldStart  = (defined('NEW_FUNCTION_REGISTRATION_GOLD') && NEW_FUNCTION_REGISTRATION_GOLD) ? (int) NEW_FUNCTION_REGISTRATION_GOLD_VALUE : 0;
+					$rcGoldWeekly = (int) RoundControl::get('weekly_gold');
+					$rcQuadrant   = RoundControl::fixedQuadrant();
+					$rcRows = [
+						[RND_INFO_SPEED_HEAD, null],
+						[RND_INFO_GAME_SPEED, SPEED . 'x'],
+						[RND_INFO_TROOP_SPEED, INCREASE_SPEED . 'x'],
+						[RND_INFO_TRADER_CAPACITY, TRADER_CAPACITY . 'x'],
+						[RND_INFO_WORLD_HEAD, null],
+						[RND_INFO_MAP_SIZE, sprintf(RND_INFO_MAP_SIZE_VALUE, (int) WORLD_MAX, 2 * (int) WORLD_MAX + 1)],
+						[RND_INFO_START_REGION, $rcQuadrant ? RoundControl::QUADRANTS[$rcQuadrant] : RND_INFO_START_REGION_FREE],
+						[RND_INFO_PROTECTION, round(PROTECTION / 3600) . ' ' . RND_HOURS],
+						[RND_INFO_PLAY_WINDOW, RoundControl::windowEnabled() ? sprintf(RND_INFO_PLAY_WINDOW_VALUE, RoundControl::windowLabel()) : RND_INFO_ALWAYS_OPEN],
+						[RND_INFO_GOLD_HEAD, null],
+						[RND_INFO_START_GOLD, $rcGoldStart],
+						[RND_INFO_WEEKLY_GOLD, $rcGoldWeekly > 0 ? sprintf(RND_INFO_WEEKLY_GOLD_VALUE, $rcGoldWeekly) : RND_OFF],
+						[RND_INFO_DATES_HEAD, null],
+						[RND_INFO_ROUND_START, date('d.m.Y H:i', RoundControl::roundStart())],
+						[RND_INFO_ARTIFACTS, date('d.m.Y H:i', RoundControl::artifactsDate())],
+						[RND_INFO_ROUND_END, date('d.m.Y H:i', RoundControl::roundEnd())],
+						[RND_INFO_STATS_HEAD, null],
+						[RND_INFO_VILLAGES, (int) $rcStats['villages']],
+						[RND_INFO_POPULATION, number_format((int) $rcStats['pop'])],
+					];
+					?>
+					<div id="server_info">
+						<h2><?php echo RND_INFO_TITLE; ?></h2>
+						<table>
+							<tbody>
+<?php foreach ($rcRows as $rcRow) { ?>
+<?php     if ($rcRow[1] === null) { ?>
+								<tr class="sep"><th colspan="2"><?php echo htmlspecialchars($rcRow[0], ENT_QUOTES, 'UTF-8'); ?></th></tr>
+<?php     } else { ?>
+								<tr><th><?php echo htmlspecialchars($rcRow[0], ENT_QUOTES, 'UTF-8'); ?>:</th><td><?php echo htmlspecialchars((string) $rcRow[1], ENT_QUOTES, 'UTF-8'); ?></td></tr>
+<?php     } ?>
+<?php } ?>
+							</tbody>
+						</table>
+						<p><a href="guide.php"><?php echo RND_INFO_READ_GUIDE; ?></a><?php if (RoundControl::isRoundOver()) { ?> | <a href="results.php"><?php echo RND_RESULTS_TITLE; ?></a><?php } ?></p>
 					</div>
 					<div id="about_the_game">
 						<h2><?php echo $lang['index'][0][10]; ?>:</h2>
