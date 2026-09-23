@@ -1,42 +1,31 @@
 Hello %USER%,
 
-Thank you for registering on our server.
+welcome to <b>%SERVER_NAME%</b>! The round started on %START% at %TIME% and %PLAYERS% players are already building their empires. Here is what makes this server special:
 
-Since the %START% at %TIME%, %TRIBES% are competing for supremacy on this game world. Right now, %PLAYERS% players in %ALLI% Alliances are fighting for dominance. To not get lost in this devastating battle, you should look for allies even though you are <b>protected by beginner&#39;s protection for %PROTECTION% hours</b>.
-
-The taskmaster will help you on your way to establishing your empire with advice, deeds and resources (after a few tasks such as finding out the exact duration of your beginner&#39;s protection). You can find him on the right side of your village. After successfully completing all of his tasks you will be on your own again.
-
+<b>The rules in short</b>
 <ul style="margin-top:0;margin-bottom:0;">
-<li>You have to heed the <a href="rules.php">game rules</a></li>
-<li>Information concerning troops and buildings can be found in the <a href="#" onClick="return Popup(0,0);">instructions</a></li>
-<li>Problems? Check the <a href="http://t3.answers.travianz.org" target="_blank">Travian Answers</a> first!</li>
-<li>No solution? Try asking in the <a href="https://github.com/Shadowss/TravianZ">Forum</a></li>
-<li>Tried everything to no avail? Write an answer to this message to contact the Support</li>
+<li><b>Speed:</b> %SPEED%x game speed, %TROOP_SPEED%x troop speed, map from -%WORLD_MAX% to +%WORLD_MAX%. %QUADRANT_TEXT%</li>
+<li><b>Beginner protection:</b> %PROTECTION% hours.</li>
+<li><b>Play window:</b> %WINDOW%.</li>
+<li><b>One account per player.</b> Please heed the <a href="rules.php">game rules</a>.</li>
 </ul>
 
-<b>Game World Timeline</b>
-
-This game world is expected to run until approximately <b>%WORLD_END_DATE%</b>. The estimated end date is calculated dynamically, following the timeline below, plus an additional <b>5 days</b> to allow for final attacks and possible World Wonder setbacks.
-
+<b>The artifact race</b>
 <ul style="margin-top:0;margin-bottom:0;">
-<li><b>Natars appear:</b> %NATARS_DATE%</li>
-<li><b>World Wonder villages appear:</b> %WW_VILLAGES_DATE%</li>
-<li><b>World Wonder Construction Plans appear:</b> %WW_PLANS_DATE%</li>
-<li><b>World Wonder build time (level 0 &rarr; 100):</b> %WW_BUILD_TIME%</li>
-<li><b>Estimated World Wonder completion:</b> %WW100_DATE%</li>
-<li><b>Estimated world end date:</b> %WORLD_END_DATE%</li>
+<li>The artifacts appear on <b>%ARTIFACTS_DATE%</b> in Natar villages.</li>
+<li>Capture them with your hero in a normal attack (not a raid) from a village with an empty Treasury: level 10 for small, level 20 for great and unique artifacts. The Treasury of the artifact village must be destroyed first. Artifacts can be stolen back the same way.</li>
+<li><b>Scoring:</b> small artifact = 1 point, great artifact = 2 points, unique artifact = 3 points.</li>
+<li>The round lasts %ROUND_DAYS% days and ends on <b>%ROUND_END%</b>. Whoever holds the most artifact points at that moment wins; alliances are ranked by the points of their members.</li>
 </ul>
 
-<b>Natars</b>
+<b>Gold</b>
+<ul style="margin-top:0;margin-bottom:0;">
+<li>You start with <b>%START_GOLD% gold</b>.</li>
+<li>Weekly gold: %WEEKLY_GOLD_TEXT%.</li>
+</ul>
 
-After approximately <b>%NATAR_TIME%</b>, the <b>legendary tribe of the Natars</b> will enter the battlefield. Prepare your armies, strengthen your alliances and get ready for the final stage of the game.
+Everything is explained in detail, with tips for your first sessions, in the <a href="guide.php">server guide</a>. The taskmaster on the right side of your village will also help you with your first steps. Questions? Write an answer to this message to contact the Support.
 
-<b>Active Server Features</b>
-
-The following features are currently active on this game world:
-
-%ACTIVE_NEW_FUNCTIONS%
-
-When you delete your account or a game world ends you can move remaining gold to another account, if applicable. The details will be explained to you in an e-mail.
+Good luck and have fun!
 
 Regards, %SERVER_NAME%
