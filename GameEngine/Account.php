@@ -74,6 +74,15 @@ class Account {
         $form->addError("winner", WINNER_ERROR);
     }
 
+    // Fixed-length round: no new accounts once the round has ended.
+    if (RoundControl::isRoundOver()) {
+        $form->addError("winner", defined('RND_REG_ROUND_OVER') ? RND_REG_ROUND_OVER : 'This round has ended. Registration is closed.');
+    }
+
+    // Starting quadrant: a fixed quadrant from the round settings always wins
+    // over whatever the form posted (server-side enforcement).
+    $kid = RoundControl::quadrantFor($_POST['kid'] ?? 0);
+
     // ==================== VALIDĂRI ====================
 
     // Username
@@ -169,7 +178,7 @@ class Account {
                 $hashedPassword,
                 $_POST['email'],
                 $_POST['vid'],
-                $_POST['kid'],
+                $kid,
                 $act,
                 $act2
             );
@@ -211,7 +220,7 @@ class Account {
                     1
                 );
 
-            $this->generateBase($_POST['kid'], $uid, $_POST['name']);
+            $this->generateBase($kid, $uid, $_POST['name']);
 
             header("Location: login.php");
             exit;
@@ -425,11 +434,12 @@ class Account {
 	function generateBase($kid, $uid, $username) {
 		global $database;
     $message = new Message();
-    // Logica exactă din original
+    // The quadrant comes from the caller (registration form or the location
+    // stored at signup for e-mail activation); a fixed quadrant from the round
+    // settings always wins. 0 = random.
+    $kid = RoundControl::quadrantFor($kid);
     if ($kid == 0) {
         $kid = rand(1, 4);
-    } else {
-        $kid = $_POST['kid'];   // suprascrie parametrul cu valoarea din POST
     }
     $database->generateVillages(
         [

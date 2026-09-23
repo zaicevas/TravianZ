@@ -154,6 +154,13 @@ $regQuad = (int) $form->getValue('kid');
 if (!isset($regQuadrants[$regQuad])) {
     $regQuad = 0;
 }
+/* Round settings may fix the starting quadrant for everyone (enforced again in Account::Signup). */
+$regFixedQuad = RoundControl::fixedQuadrant();
+if (isset($regQuadrants[$regFixedQuad]) && $regFixedQuad > 0) {
+    $regQuad = $regFixedQuad;
+} else {
+    $regFixedQuad = 0;
+}
 /* When the server rejected the form we jump straight back to the recap step. */
 $regStep = $regErrors ? 3 : 1;
 ?>
@@ -261,6 +268,8 @@ $regStep = $regErrors ? 3 : 1;
 .rw-change{position:absolute;left:0;bottom:6px;width:100%;text-align:center;cursor:pointer;
            font:bold 12px Arial,Helvetica,sans-serif;color:#5c8a1f}
 .rw-change:hover{text-decoration:underline}
+.rw-fixedquad{position:absolute;left:0;bottom:6px;width:100%;text-align:center;
+              font:bold 12px Arial,Helvetica,sans-serif;color:#5b4a36}
 .rw-field{margin:0 0 8px}
 .rw-field label{display:block;margin:0 0 3px;font:bold 12px Arial,Helvetica,sans-serif;color:#5b4a36}
 .rw-field input.rw-text{width:100%;height:32px;padding:0 8px;border:1px solid #b9ab93;border-radius:3px;
@@ -341,6 +350,7 @@ if(REG_OPEN == true){ ?>
 		<button type="button" class="rw-btn" id="rw_next1"><?php echo regText('REG_CONFIRM', 'Confirm'); ?></button>
 	</div>
 
+<?php if (!$regFixedQuad) { ?>
 	<!-- =============== STEP 2 : starting position =============== -->
 	<div class="rw-step" id="rw_step2">
 		<p class="rw-intro"><?php echo regText('REG_POS_INTRO', 'Where do you want to start building up your empire? Use the "recommended" area for the most ideal location. Or select the area where your friends are located and team up!'); ?></p>
@@ -357,6 +367,7 @@ if(REG_OPEN == true){ ?>
 		<button type="button" class="rw-btn" id="rw_next2"><?php echo regText('REG_CONFIRM', 'Confirm'); ?></button>
 		<span class="rw-back" id="rw_back2">&laquo; <?php echo regText('REG_BACK', 'Back'); ?></span>
 	</div>
+<?php } ?>
 
 	<!-- =============== STEP 3 : recap + account data =============== -->
 	<div class="rw-step" id="rw_step3">
@@ -371,7 +382,11 @@ if(REG_OPEN == true){ ?>
 			<div class="rw-card">
 				<h3 id="rw_r_quad">&nbsp;</h3>
 				<div class="rw-pic" id="rw_r_quadpic"></div>
+<?php if ($regFixedQuad) { ?>
+				<span class="rw-fixedquad" id="rw_fixedquad"><?php echo htmlspecialchars(sprintf(RND_REG_FIXED_QUADRANT, $regQuadrants[$regFixedQuad]['coords']), ENT_QUOTES, 'UTF-8'); ?></span>
+<?php } else { ?>
 				<span class="rw-change" data-goto="2"><?php echo regText('REG_CHANGE', 'Change'); ?></span>
+<?php } ?>
 			</div>
 		</div>
 
@@ -443,6 +458,8 @@ echo $form->getError('agree');
 		3 => regText('REG_STEP3_TITLE', 'Confirm your selection'),
 	)); ?>;
 
+	var FIXED_QUAD = <?php echo (int) $regFixedQuad; ?>;
+
 	var wiz = document.getElementById('regwiz');
 	if (!wiz) { return; }
 
@@ -494,7 +511,7 @@ echo $form->getError('agree');
 		})(thumbs[t]);
 	}
 
-	/* ---- step 2 : quadrants ---- */
+	/* ---- step 2 : quadrants (absent when the quadrant is fixed) ---- */
 	var quads = wiz.getElementsByClassName('rw-q');
 	function markQuad(kid) {
 		fKid.value = kid;
@@ -510,13 +527,15 @@ echo $form->getError('agree');
 			return function () { markQuad(parseInt(node.getAttribute('data-kid'), 10)); };
 		})(quads[q]);
 	}
-	rand.onclick = function () { markQuad(0); };
+	if (rand) { rand.onclick = function () { markQuad(0); }; }
 
 	/* ---- navigation ---- */
-	document.getElementById('rw_next1').onclick = function () { showStep(2); };
-	document.getElementById('rw_next2').onclick = function () { showStep(3); };
-	document.getElementById('rw_back2').onclick = function () { showStep(1); };
-	document.getElementById('rw_back3').onclick = function () { showStep(2); };
+	document.getElementById('rw_next1').onclick = function () { showStep(FIXED_QUAD ? 3 : 2); };
+	document.getElementById('rw_back3').onclick = function () { showStep(FIXED_QUAD ? 1 : 2); };
+	if (!FIXED_QUAD) {
+		document.getElementById('rw_next2').onclick = function () { showStep(3); };
+		document.getElementById('rw_back2').onclick = function () { showStep(1); };
+	}
 
 	var changes = wiz.getElementsByClassName('rw-change');
 	for (var c = 0; c < changes.length; c++) {
