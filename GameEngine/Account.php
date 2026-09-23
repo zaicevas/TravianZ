@@ -231,6 +231,12 @@ class Account {
 	private function Activate() {
 		global $database;
 
+    // Fixed-length round: no new accounts once the round has ended (same rule as Signup).
+    if (RoundControl::isRoundOver()) {
+        header("Location: activate.php?e=4");
+        exit;
+    }
+
     // ==================== VERIFICARE DATA DE START A SERVERULUI ====================
     if (START_DATE < date('d.m.Y') || (START_DATE === date('d.m.Y') && START_TIME <= date('H:i'))) {
         

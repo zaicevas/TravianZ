@@ -56,7 +56,10 @@ AccessLogger::logRequest();
 <div id="content"  class="activate">
 <?php
 
-	if(isset($_GET['e']) && (START_DATE < date('d.m.y') || START_DATE == date('d.m.y') && START_TIME <= date('H:i')))
+	if(isset($_GET['e']) && $_GET['e'] === '4') {
+		// the round has ended: activation refused (Account::Activate)
+		echo '<p class="error">' . htmlspecialchars(defined('RND_REG_ROUND_OVER') ? RND_REG_ROUND_OVER : 'This round has ended. Registration is closed.', ENT_QUOTES, 'UTF-8') . '</p>';
+	} else if(isset($_GET['e']) && (START_DATE < date('d.m.y') || START_DATE == date('d.m.y') && START_TIME <= date('H:i')))
 	{
 		switch($_GET['e'])
 		{
