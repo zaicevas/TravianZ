@@ -43,6 +43,15 @@ include_once($autoprefix.'GameEngine/config.php');
 use App\Utils\AccessLogger;
 AccessLogger::logRequest();
 
+// Daily play window / round end (RoundControl): ajax.php does not bootstrap
+// Session.php, so the same rule is applied here for logged-in players.
+if (!isset($_SESSION)) {
+    session_start();
+}
+include_once($autoprefix.'GameEngine/Database.php');
+include_once($autoprefix.'GameEngine/RoundControl.php');
+RoundControl::enforceAjax($database, isset($_GET['f']) ? (string) $_GET['f'] : '');
+
 /**
  * ajax.php poate fi cerut si fara parametrul "f" (boti, prefetch de browser,
  * un link vechi). Fara isset() iesea "Undefined array key f" la fiecare

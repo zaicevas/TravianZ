@@ -78,6 +78,7 @@ include_once("Logging.php");
 include_once("Message.php");
 include_once("Alliance.php");
 include_once("Profile.php");
+include_once("RoundControl.php");
 
 class Session {
 
@@ -185,6 +186,15 @@ function __construct() {
             header('Location: maintenance.php');
             exit;
         }
+    }
+
+    // === ROUND CONTROL (daily play window / hard round end), once access is known ===
+    // Outside the play window non-staff players are sent to playwindow.php, after
+    // the round end to results.php (see RoundControl). The admin panel and the
+    // automation (cron.php) do not go through this check, so neither is affected.
+    if ($this->logged_in && !$this->inAdmin) {
+        global $autoprefix;
+        RoundControl::enforceSession($this->access, $this->username ?? '', $autoprefix);
     }
 
     // === DEBUG ERROR LOG (admin-controlled, transparent to players) ===
