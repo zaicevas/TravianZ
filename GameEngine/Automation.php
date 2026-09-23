@@ -93,6 +93,7 @@ include_once __DIR__ . '/Automation/AutomationNatarsWWBuild.php';
 include_once __DIR__ . '/Automation/AutomationMedals.php';
 include_once __DIR__ . '/Automation/AutomationCleanup.php';
 include_once __DIR__ . '/Automation/AutomationPlayerStatistics.php';
+include_once __DIR__ . '/Automation/AutomationRound.php';
 
 class Automation {
     // === Faza S2: metodele clasei, grupate pe domenii ===
@@ -113,6 +114,7 @@ class Automation {
 
     use AutomationCleanup;
     use AutomationPlayerStatistics;
+    use AutomationRound;
     /**
      * @var object The artifacts class, used to create Natars, artifacts and obtaining info about them
      */
@@ -156,7 +158,8 @@ class Automation {
         				  "heroAdventureComplete",
         				  "cleanupOldData",
         				  "recordPlayerStatistics",
-					  "buildNatarsWonder"];
+					  "buildNatarsWonder",
+					  "roundEvents"];
         
         foreach($methodsArrays as $method){
         	$file = fopen($autoprefix."GameEngine/Prevention/".$method.".txt", "w");
