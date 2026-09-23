@@ -403,6 +403,23 @@ class RoundControl
     }
 
     /**
+     * Whether the visitor has a game session, for the top navigation of the
+     * out-of-game pages (results.php, guide.php) that do not load Session.php.
+     * Display only - never use it for access decisions. Reads an existing
+     * session and closes it at once; visitors without the cookie get none.
+     */
+    public static function hasPlayerSession()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            if (empty($_COOKIE[session_name()]) || headers_sent()) {
+                return false;
+            }
+            @session_start(['read_and_close' => true]);
+        }
+        return !empty($_SESSION['username']) && !empty($_SESSION['sessid']);
+    }
+
+    /**
      * File name of the script that is really executing, e.g. "dorf1.php", or
      * '' when it is not a file in the web root.
      *

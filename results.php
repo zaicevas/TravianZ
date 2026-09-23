@@ -54,6 +54,7 @@ function rnd_h($value) {
 }
 
 $rndPageTitle = $ended ? RND_RESULTS_TITLE : RND_RESULTS_LIVE_TITLE;
+$rndLoggedIn = RoundControl::hasPlayerSession();
 include("Templates/Round/outgame_top.tpl");
 ?>
 <h1><?php echo rnd_h($rndPageTitle); ?></h1>

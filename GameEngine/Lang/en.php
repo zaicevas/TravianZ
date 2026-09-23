@@ -4492,7 +4492,7 @@ tz_def('RND_RESULTS_LIVE_TITLE',     'Artifact race - results');
 tz_def('RND_RESULTS_ENDED',          'The round ended on %s. These are the final results, frozen at the end of the round.');
 tz_def('RND_RESULTS_RUNNING',        'The round is in progress and ends on %s. The results are published here once it has ended.');
 tz_def('RND_RESULTS_FINALISING',     'The round ended on %s. The results are being finalised - please check back in a minute.');
-tz_def('RND_RESULTS_TIEBREAK',       'Ties are broken by the number of unique artifacts, then great artifacts, then small artifacts (more is better); if still tied, alphabetically by name. Artifacts held by the Natars or by staff accounts do not score.');
+tz_def('RND_RESULTS_TIEBREAK',       'Ties are broken by the number of unique artifacts, then great artifacts, then small artifacts (more is better); if still tied, alphabetically by player name (alliances: by tag). Artifacts held by the Natars or by staff accounts do not score.');
 tz_def('RND_RESULTS_SCORING',        'Scoring: every small artifact is worth 1 point, every great artifact 2 points and every unique artifact 3 points. The player (and the alliance) with the highest score wins.');
 tz_def('RND_RESULTS_PLAYERS',        'Players');
 tz_def('RND_RESULTS_ALLIANCES',      'Alliances');

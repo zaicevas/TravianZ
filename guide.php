@@ -56,6 +56,7 @@ if ($weekly > 0 && $start) {
 }
 
 $rndPageTitle = RND_GUIDE;
+$rndLoggedIn = RoundControl::hasPlayerSession();
 include("Templates/Round/outgame_top.tpl");
 ?>
 <h1><?php echo htmlspecialchars(SERVER_NAME, ENT_QUOTES, 'UTF-8'); ?> - <?php echo RND_GUIDE; ?></h1>
@@ -104,7 +105,9 @@ They appear on <b><?php echo date($fmt, $artifacts); ?></b> in Natar villages sp
 	<p><b>Scoring:</b> small artifact = <b>1 point</b>, great artifact = <b>2 points</b>, unique artifact = <b>3 points</b>.</p>
 	<p>At the round end (<b><?php echo date($fmt, $end); ?></b>) the artifact holders are frozen. The player with the highest
 		score wins; alliances are ranked by the total score of their members. Population is shown as secondary information.
-		The holders are not published while the round runs; the <a href="results.php">results</a> appear right after the end.</p>
+		The holders are not published while the round runs; the <a href="results.php">results</a> appear right after the end.
+		The game processes arriving troops once a minute, so <b>an attack must land at least one minute before the end</b>
+		for its capture to count.</p>
 	<p><?php echo RND_RESULTS_TIEBREAK; ?></p>
 </div>
 
