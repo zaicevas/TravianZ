@@ -27,8 +27,13 @@
  *     pages (Session.php) or call ajax.php. The world itself keeps running.
  *   - the weekly gold bonus, granted from the automation tick.
  *   - the hard round end: START_DATE + START_TIME + round_days. At the end a
- *     snapshot of the artifact holders is stored once, so later troop
+ *     snapshot of the artifact holders is stored once (first automation tick
+ *     after the end, before troop movements are processed), so later troop
  *     movements cannot change the result (results.php).
+ *
+ * The bookkeeping rows (last weekly gold period, final snapshot) record the
+ * round start they belong to; a value from another round (reinstall, reset,
+ * new START_DATE) counts as "none".
  *
  * Self-contained (static, resolves the DB link from globals) so the in-game
  * pages, ajax.php, cron.php/Automation and the admin panel can all use it.
@@ -397,6 +402,29 @@ class RoundControl
         return (int) $access >= self::STAFF_ACCESS || in_array($username, ['Support', 'Multihunter'], true);
     }
 
+    /**
+     * File name of the script that is really executing, e.g. "dorf1.php", or
+     * '' when it is not a file in the web root.
+     *
+     * Uses SCRIPT_FILENAME (set by the web server, never contains PATH_INFO):
+     * basename($_SERVER['PHP_SELF']) is attacker-controlled through PATH_INFO,
+     * /dorf1.php/index.php runs dorf1.php but PHP_SELF ends in "index.php".
+     */
+    public static function currentPage()
+    {
+        static $page = null;
+        if ($page !== null) {
+            return $page;
+        }
+        $file = (string) ($_SERVER['SCRIPT_FILENAME'] ?? '');
+        $real = $file !== '' ? realpath($file) : false;
+        $root = realpath(dirname(__DIR__));
+        if ($real === false || $root === false || dirname($real) !== $root) {
+            return $page = '';
+        }
+        return $page = basename($real);
+    }
+
     private static function isAjaxRequest()
     {
         if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') {
@@ -448,17 +476,17 @@ class RoundControl
             return;
         }
 
-        $page = basename($_SERVER['PHP_SELF'] ?? '');
+        $page = self::currentPage();
         if (in_array($page, self::WINDOW_FREE_PAGES, true)) {
             return;
         }
 
-        // the World Wonder ending keeps its own flow (Session::isWinner / winner.php)
-        if (isset($GLOBALS['database']) && $GLOBALS['database']->isThereAWinner()) {
-            return;
-        }
+        // A World Wonder winner ends the round its own way (Session::isWinner /
+        // winner.php): no results redirect then, but the play window still applies.
+        $over = self::isRoundOver()
+            && !(isset($GLOBALS['database']) && $GLOBALS['database']->isThereAWinner());
 
-        if (self::isRoundOver()) {
+        if ($over) {
             $isGet   = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET';
             $isAction = false;
             foreach (self::ACTION_PARAMS as $param) {
@@ -486,14 +514,23 @@ class RoundControl
         }
 
         $over   = self::isRoundOver();
-        $closed = !$over && !self::isWindowOpen();
+        $closed = !self::isWindowOpen();
         if (!$over && !$closed) {
             return;
         }
-        if ($over && in_array($action, self::ENDED_AJAX_OK, true)) {
-            return;
+        // same rules as enforceSession(): a World Wonder winner only lifts the
+        // round-over block, the play window still applies
+        if ($over && $database->isThereAWinner()) {
+            $over = false;
         }
-        if ($database->isThereAWinner()) {
+        if ($over) {
+            if (in_array($action, self::ENDED_AJAX_OK, true)) {
+                return;
+            }
+            $reason = 'round_over';
+        } elseif ($closed) {
+            $reason = 'play_window_closed';
+        } else {
             return;
         }
 
@@ -502,18 +539,53 @@ class RoundControl
         if (self::isStaff($access, $name)) {
             return;
         }
-        self::denyAjax($over ? 'round_over' : 'play_window_closed');
+        self::denyAjax($reason);
     }
 
     /* ---- Automation ----------------------------------------------------- */
 
-    /** Called from every automation tick (cron.php, or Village.php when cron is not running). */
-    public static function runAutomation($now = null)
+    /**
+     * Start of every automation tick (cron.php, or Village.php when cron is not
+     * running): freeze the artifact holders BEFORE troop movements of this tick
+     * are processed, so battles landing after the end cannot count.
+     */
+    public static function runSnapshot($now = null)
     {
-        $now = $now === null ? time() : (int) $now;
         self::reload();
-        self::grantWeeklyGold($now);
-        self::takeFinalSnapshot($now);
+        self::takeFinalSnapshot($now === null ? time() : (int) $now);
+    }
+
+    /** End of every automation tick: weekly gold. */
+    public static function runWeeklyGold($now = null)
+    {
+        self::reload();
+        self::grantWeeklyGold($now === null ? time() : (int) $now);
+    }
+
+    /** Decode a bookkeeping value; null unless it belongs to the current round. */
+    private static function roundValue($raw)
+    {
+        $data = ($raw !== null && $raw !== '') ? json_decode($raw, true) : null;
+        if (!is_array($data) || (int) ($data['round_start'] ?? -1) !== self::roundStart()) {
+            return null;
+        }
+        return $data;
+    }
+
+    /** Remove the bookkeeping rows (not the settings), e.g. on a server reset. */
+    public static function clearRoundState()
+    {
+        $link = self::link();
+        if (!$link) {
+            return false;
+        }
+        try {
+            mysqli_query($link, "DELETE FROM " . self::table() . " WHERE `name` IN ('" . self::KEY_GOLD_PERIOD . "', '" . self::KEY_SNAPSHOT . "')");
+        } catch (\Throwable $e) {
+            // table does not exist yet: nothing to clear
+        }
+        self::reload();
+        return true;
     }
 
     /**
@@ -537,10 +609,11 @@ class RoundControl
         return [$k, $k > 0 ? self::addDays($start, 7 * $k) : 0];
     }
 
-    /** Last weekly period that has been processed (0 = none yet). */
+    /** Last weekly period of the current round that has been processed (0 = none yet). */
     public static function lastGoldPeriod()
     {
-        return (int) self::getRaw(self::KEY_GOLD_PERIOD);
+        $data = self::roundValue(self::getRaw(self::KEY_GOLD_PERIOD));
+        return $data ? (int) ($data['period'] ?? 0) : 0;
     }
 
     /** First weekly grant after $now (for display), or 0. */
@@ -559,9 +632,10 @@ class RoundControl
     /**
      * Grant the weekly gold for the current period, exactly once.
      *
-     * The last processed period is stored in round_settings and read with
-     * SELECT ... FOR UPDATE inside a transaction, so concurrent or repeated
-     * runs cannot grant a period twice. A period is also marked as processed
+     * The last processed period (with the round start it belongs to) is stored
+     * in round_settings and read with SELECT ... FOR UPDATE inside a
+     * transaction, so concurrent or repeated runs cannot grant a period twice;
+     * a counter of another round counts as 0. A period is also marked as processed
      * when the bonus is off (amount 0), so switching it on later does not pay
      * out a period retroactively. Only the most recent period is paid (no
      * catch-up for missed periods). Recipients: real players (not system,
@@ -605,7 +679,8 @@ class RoundControl
             $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
             mysqli_stmt_close($stmt);
 
-            if ($row && (int) $row['value'] >= $period) {
+            $stored = $row ? self::roundValue((string) $row['value']) : null;
+            if ($stored && (int) ($stored['period'] ?? 0) >= $period) {
                 mysqli_commit($link);
                 return 0;
             }
@@ -638,7 +713,7 @@ class RoundControl
                 }
             }
 
-            $value = (string) $period;
+            $value = json_encode(['round_start' => self::roundStart(), 'period' => $period]);
             $stmt = mysqli_prepare($link, "UPDATE " . self::table() . " SET `value` = ?, `updated` = ? WHERE `name` = ?");
             mysqli_stmt_bind_param($stmt, 'sis', $value, $now, $key);
             mysqli_stmt_execute($stmt);
@@ -666,21 +741,30 @@ class RoundControl
 
     /* ---- Round end snapshot / results ----------------------------------- */
 
-    /** The final snapshot (array) or null when not taken yet. Cached. */
+    /** The final snapshot of the current round (array), or null when not taken yet. Cached. */
     public static function getSnapshot()
     {
         if (self::$snapshot !== false) {
             return self::$snapshot;
         }
-        $raw  = self::getRaw(self::KEY_SNAPSHOT);
-        $data = $raw !== null ? json_decode($raw, true) : null;
-        return self::$snapshot = (is_array($data) ? $data : null);
+        return self::$snapshot = self::roundValue(self::getRaw(self::KEY_SNAPSHOT));
+    }
+
+    /** JSON for the snapshot; invalid UTF-8 (e.g. in a village name) is replaced, never fatal. */
+    public static function encodeSnapshot(array $data)
+    {
+        $json = json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        if (!is_string($json) || $json === '' || !is_array(json_decode($json, true))) {
+            return false;
+        }
+        return $json;
     }
 
     /**
      * Store the final artifact holders once, at/after the round end.
-     * INSERT IGNORE on the primary key: the first writer wins, later calls are
-     * no-ops even when they race.
+     * Row-locked (INSERT IGNORE + SELECT ... FOR UPDATE): the first writer
+     * wins, later or racing calls are no-ops. A snapshot of another round is
+     * replaced; an empty/undecodable one is never stored.
      *
      * @return bool true when this call took the snapshot
      */
@@ -696,24 +780,50 @@ class RoundControl
         }
 
         $data = self::collectStandings();
-        $data['taken_at']  = $now;
-        $data['round_end'] = self::roundEnd();
-        $json = json_encode($data);
-        $key  = self::KEY_SNAPSHOT;
+        $data['taken_at']    = $now;
+        $data['round_end']   = self::roundEnd();
+        $data['round_start'] = self::roundStart();
+        $json = self::encodeSnapshot($data);
+        if ($json === false) {
+            error_log('RoundControl: snapshot not stored, JSON encoding failed: ' . json_last_error_msg());
+            return false;
+        }
+        $key = self::KEY_SNAPSHOT;
 
         try {
-            $stmt = mysqli_prepare($link, "INSERT IGNORE INTO " . self::table() . " (`name`, `value`, `updated`) VALUES (?, ?, ?)");
-            mysqli_stmt_bind_param($stmt, 'ssi', $key, $json, $now);
+            mysqli_begin_transaction($link);
+
+            $stmt = mysqli_prepare($link, "INSERT IGNORE INTO " . self::table() . " (`name`, `value`, `updated`) VALUES (?, '', ?)");
+            mysqli_stmt_bind_param($stmt, 'si', $key, $now);
             mysqli_stmt_execute($stmt);
-            $taken = mysqli_stmt_affected_rows($stmt) === 1;
             mysqli_stmt_close($stmt);
+
+            $stmt = mysqli_prepare($link, "SELECT `value` FROM " . self::table() . " WHERE `name` = ? FOR UPDATE");
+            mysqli_stmt_bind_param($stmt, 's', $key);
+            mysqli_stmt_execute($stmt);
+            $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+            mysqli_stmt_close($stmt);
+
+            if ($row && self::roundValue((string) $row['value']) !== null) {
+                mysqli_commit($link);   // someone else was faster
+                self::$snapshot = false;
+                return false;
+            }
+
+            $stmt = mysqli_prepare($link, "UPDATE " . self::table() . " SET `value` = ?, `updated` = ? WHERE `name` = ?");
+            mysqli_stmt_bind_param($stmt, 'sis', $json, $now, $key);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+
+            mysqli_commit($link);
         } catch (\Throwable $e) {
+            try { mysqli_rollback($link); } catch (\Throwable $ignored) {}
             error_log('RoundControl: snapshot failed: ' . $e->getMessage());
             return false;
         }
 
         self::$snapshot = false;
-        return $taken;
+        return true;
     }
 
     /** Current artifact holders and top population (live data). */
@@ -727,7 +837,7 @@ class RoundControl
 
         $q = "SELECT a.id, a.name, a.type, a.size, a.vref, a.owner,
                 v.name AS village, w.x, w.y,
-                u.username, u.tribe, u.alliance AS alliance_id,
+                u.username, u.tribe, u.access, u.alliance AS alliance_id,
                 al.tag AS alliance_tag, al.name AS alliance_name
             FROM `" . TB_PREFIX . "artefacts` a
             LEFT JOIN `" . TB_PREFIX . "vdata` v ON v.wref = a.vref
@@ -751,6 +861,7 @@ class RoundControl
                     'owner'         => (int) $row['owner'],
                     'username'      => (string) $row['username'],
                     'tribe'         => (int) $row['tribe'],
+                    'access'        => (int) $row['access'],
                     'alliance_id'   => (int) $row['alliance_id'],
                     'alliance_tag'  => (string) $row['alliance_tag'],
                     'alliance_name' => (string) $row['alliance_name'],
@@ -788,9 +899,20 @@ class RoundControl
     }
 
     /**
-     * Player and alliance rankings from a standings array (snapshot or live).
-     * Artifacts still held by the Natars or other system accounts score for
-     * nobody. Order: score, then unique/great/small counts, then name.
+     * Does this artifact count for the race? Not when it is held by the Natars
+     * or another system account (id <= 5) or by staff (access >= 8, Support,
+     * Multihunter - the same accounts that get no weekly gold).
+     */
+    public static function isScored(array $art)
+    {
+        return (int) $art['owner'] > 5 && !self::isStaff((int) ($art['access'] ?? 0), (string) ($art['username'] ?? ''));
+    }
+
+    /**
+     * Player and alliance rankings from a standings array (snapshot or live),
+     * scored artifacts only (isScored). Order, as stated on the results page
+     * (RND_RESULTS_TIEBREAK): score, then more unique, more great, more small
+     * artifacts, then name (alphabetical).
      */
     public static function rank(array $standings)
     {
@@ -799,7 +921,7 @@ class RoundControl
 
         foreach ($standings['artifacts'] ?? [] as $art) {
             $owner = (int) $art['owner'];
-            if ($owner <= 5) {
+            if (!self::isScored($art)) {
                 continue;
             }
             $points = self::SCORE[(int) $art['size']] ?? 0;

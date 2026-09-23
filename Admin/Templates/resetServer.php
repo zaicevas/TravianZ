@@ -38,6 +38,11 @@ if($keepAdmin){
     $adminData = mysqli_fetch_assoc($res);
 }
 
+// Round bookkeeping (last weekly gold period, final artifact snapshot) belongs
+// to the old round; the admin's round settings are kept.
+include_once("../../GameEngine/RoundControl.php");
+RoundControl::clearRoundState();
+
 // 2. Golim tot - fără FK checks
 mysqli_query($GLOBALS["link"], "SET FOREIGN_KEY_CHECKS=0");
 

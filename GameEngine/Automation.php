@@ -141,6 +141,10 @@ class Automation {
     		}
     	}
     	
+        // Round end: freeze the artifact holders before anything of this tick
+        // (battles, conquests, deletions) can change them.
+        $this->roundSnapshot();
+
         $this->procNewClimbers();
         $this->ClearUser();
         $this->pruneResource();

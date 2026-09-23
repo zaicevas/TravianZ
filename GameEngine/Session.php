@@ -182,7 +182,8 @@ function __construct() {
     $maint = $database->getMaintenance();
     if($maint['active'] == 1 && $this->access < 9) {
         // evita loop infinit
-        if(strpos($_SERVER['PHP_SELF'], 'maintenance.php') === false) {
+        // SCRIPT_FILENAME based: PHP_SELF carries PATH_INFO (/dorf1.php/maintenance.php)
+        if(RoundControl::currentPage() !== 'maintenance.php') {
             header('Location: maintenance.php');
             exit;
         }
@@ -190,9 +191,9 @@ function __construct() {
 
     // === ROUND CONTROL (daily play window / hard round end), once access is known ===
     // Outside the play window non-staff players are sent to playwindow.php, after
-    // the round end to results.php (see RoundControl). The admin panel and the
-    // automation (cron.php) do not go through this check, so neither is affected.
-    if ($this->logged_in && !$this->inAdmin) {
+    // the round end to results.php (see RoundControl). Staff always passes; the
+    // automation (cron.php) does not go through this check.
+    if ($this->logged_in) {
         global $autoprefix;
         RoundControl::enforceSession($this->access, $this->username ?? '', $autoprefix);
     }
@@ -355,7 +356,7 @@ function __construct() {
             $this->isWinner();
 
             if ($user == 'Support') {
-                $req_file = basename($_SERVER['PHP_SELF']);
+                $req_file = RoundControl::currentPage();
 
                 if (!in_array($req_file, [
                     'nachrichten.php', 'logout.php', 'statistiken.php',
@@ -381,7 +382,7 @@ function __construct() {
 
     function isBanned() {
         if ($this->access == BANNED &&
-            !in_array(basename($_SERVER['PHP_SELF']), ['banned.php', 'nachrichten.php', 'rules.php'])) {
+            !in_array(RoundControl::currentPage(), ['banned.php', 'nachrichten.php', 'rules.php'])) {
 
             header('Location: banned.php');
             exit;
@@ -390,7 +391,7 @@ function __construct() {
 
     function maintenance() {
         if (($_SESSION['ok'] ?? null) == 2 &&
-            basename($_SERVER['PHP_SELF']) != 'maintenance.php') {
+            RoundControl::currentPage() != 'maintenance.php') {
 
             header('Location: maintenance.php');
             exit;
@@ -431,7 +432,8 @@ function __construct() {
             return;
         }
 
-        $requiredPage = basename($_SERVER['PHP_SELF']);
+        // the executing script, not PHP_SELF (PATH_INFO: /build.php/winner.php)
+        $requiredPage = RoundControl::currentPage();
 
         $idParam = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
