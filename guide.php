@@ -29,7 +29,7 @@ tz_load_language(LANG);
 AccessLogger::logRequest();
 
 $now        = time();
-$fmt        = 'd.m.Y H:i';
+$fmt        = RoundControl::DATE_FMT;
 $start      = RoundControl::roundStart();
 $end        = RoundControl::roundEnd();
 $artifacts  = RoundControl::artifactsDate();

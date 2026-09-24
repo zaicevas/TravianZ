@@ -73,10 +73,10 @@ if (!$errors && $new['round_days'] !== $old['round_days']) {
     $newEnd = RoundControl::roundEnd((int) $new['round_days']);
 
     if (RoundControl::isRoundOver($now)) {
-        $errors[] = 'The round has already ended on ' . date('d.m.Y H:i', RoundControl::roundEnd())
+        $errors[] = 'The round has already ended on ' . RoundControl::fmt(RoundControl::roundEnd())
             . '; its result is final and the length can no longer be changed.';
     } elseif ($newEnd <= $now) {
-        $errors[] = 'With ' . (int) $new['round_days'] . ' days the round would end on ' . date('d.m.Y H:i', $newEnd)
+        $errors[] = 'With ' . (int) $new['round_days'] . ' days the round would end on ' . RoundControl::fmt($newEnd)
             . ', which is in the past. Choose a later end.';
     } elseif ($newEnd <= RoundControl::roundStart()) {
         $errors[] = 'The round end must be after the round start.';

@@ -4447,6 +4447,11 @@ tz_def('GCHAT_REPORT_FALLBACK', 'Battle report');
 // Traviancikas round rules (RoundControl): play window, weekly gold, artifact race
 tz_def('RND_GUIDE',                  'Guide');
 tz_def('RND_HOURS',                  'hours');
+tz_def('RND_HOUR',                   'hour');
+tz_def('RND_DAYS',                   'days');
+tz_def('RND_DAY',                    'day');
+tz_def('RND_MINUTES',                'minutes');
+tz_def('RND_MINUTE',                 'minute');
 tz_def('RND_OFF',                    'off');
 tz_def('RND_SERVER_TIME',            'server time');
 tz_def('RND_REG_ROUND_OVER',         'This round has ended. Registration is closed.');
@@ -4478,6 +4483,15 @@ tz_def('RND_INFO_STATS_HEAD',        'World stats');
 tz_def('RND_INFO_VILLAGES',          'Villages');
 tz_def('RND_INFO_POPULATION',        'Population');
 tz_def('RND_INFO_READ_GUIDE',        'Read the server guide');
+// homepage key dates panel
+tz_def('RND_KEY_STARTS',             'Round starts');
+tz_def('RND_KEY_STARTED',            'Round started');
+tz_def('RND_KEY_ENDED',              'Round ended');
+tz_def('RND_KEY_IN',                 'in %s');
+tz_def('RND_KEY_RUNNING',            'in progress - ends in %s');
+tz_def('RND_KEY_WINDOW',             'Play window');
+tz_def('RND_KEY_WINDOW_DAILY',       'every day, server time (%s)');
+tz_def('RND_KEY_WINDOW_OPEN',        'open now');
 // waiting page (playwindow.php)
 tz_def('RND_WAIT_TITLE',             'The play window is closed');
 tz_def('RND_WAIT_INTRO',             'Hi %s, this world can only be played during the daily play window:');

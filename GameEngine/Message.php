@@ -787,7 +787,7 @@ class Message
      * timeline. Every value comes from config.php or the round settings.
      */
     $formatDate = function ($timestamp) {
-        return date("d.m.Y H:i", $timestamp);
+        return RoundControl::fmt($timestamp);
     };
 
     $worldStart = RoundControl::roundStart();
@@ -838,7 +838,7 @@ class Message
         [
             $username,
             SERVER_NAME,
-            date("d.m.Y", $worldStart),
+            date("Y.m.d", $worldStart),
             date("H:i", $worldStart),
             $database->countUser(),
             SPEED,

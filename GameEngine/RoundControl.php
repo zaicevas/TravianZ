@@ -64,6 +64,9 @@ class RoundControl
     /** Access level from which an account counts as staff (MH, Support, admin). */
     const STAFF_ACCESS = 8;
 
+    /** How round dates are shown to players and staff: 2026.09.27 18:30. */
+    const DATE_FMT = 'Y.m.d H:i';
+
     /** Quadrant id => coordinates label (same numbering as registration). */
     const QUADRANTS = [1 => '(-|+)', 2 => '(+|+)', 3 => '(-|-)', 4 => '(+|-)'];
 
@@ -258,6 +261,31 @@ class RoundControl
     }
 
     /* ---- Round dates ---------------------------------------------------- */
+
+    /** A timestamp in DATE_FMT, server timezone. */
+    public static function fmt($ts)
+    {
+        return date(self::DATE_FMT, (int) $ts);
+    }
+
+    /** "3 days 4 hours", "5 hours 20 minutes" or "12 minutes" (rounded down). */
+    public static function durationText($seconds)
+    {
+        $m = max(0, (int) floor($seconds / 60));
+        $d = intdiv($m, 1440);
+        $h = intdiv($m % 1440, 60);
+        $m = $m % 60;
+        $unit = function ($n, $one, $many) {
+            return $n . ' ' . ($n === 1 ? $one : $many);
+        };
+        if ($d > 0) {
+            return $unit($d, RND_DAY, RND_DAYS) . ($h > 0 ? ' ' . $unit($h, RND_HOUR, RND_HOURS) : '');
+        }
+        if ($h > 0) {
+            return $unit($h, RND_HOUR, RND_HOURS) . ($m > 0 ? ' ' . $unit($m, RND_MINUTE, RND_MINUTES) : '');
+        }
+        return $unit($m, RND_MINUTE, RND_MINUTES);
+    }
 
     /** Round start (START_DATE + START_TIME, server timezone). */
     public static function roundStart()
@@ -470,7 +498,7 @@ class RoundControl
         }
         $body = ['ok' => 0, 'reason' => $reason];
         if ($reason === 'play_window_closed') {
-            $body['message'] = 'The play window is closed. It opens again at ' . date('d.m.Y H:i', self::nextWindowStart()) . ' (server time).';
+            $body['message'] = 'The play window is closed. It opens again at ' . self::fmt(self::nextWindowStart()) . ' (server time).';
             $body['next'] = self::nextWindowStart();
         } else {
             $body['message'] = 'The round has ended.';

@@ -61,12 +61,12 @@ include("Templates/Round/outgame_top.tpl");
 
 <div class="rnd-box">
 <?php if (!$ended) { ?>
-	<p id="rnd_in_progress"><?php echo sprintf(RND_RESULTS_RUNNING, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?>
+	<p id="rnd_in_progress"><?php echo sprintf(RND_RESULTS_RUNNING, '<b>' . RoundControl::fmt($roundEnd) . '</b>'); ?>
 	(<span class="rnd-countdown" data-left="<?php echo (int) max(0, $roundEnd - $now); ?>" data-done-url="results.php"></span>)</p>
 <?php } elseif ($snapshot === null) { ?>
-	<p id="rnd_finalising"><?php echo sprintf(RND_RESULTS_FINALISING, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?></p>
+	<p id="rnd_finalising"><?php echo sprintf(RND_RESULTS_FINALISING, '<b>' . RoundControl::fmt($roundEnd) . '</b>'); ?></p>
 <?php } else { ?>
-	<p><?php echo sprintf(RND_RESULTS_ENDED, '<b>' . date('d.m.Y H:i', $roundEnd) . '</b>'); ?></p>
+	<p><?php echo sprintf(RND_RESULTS_ENDED, '<b>' . RoundControl::fmt($roundEnd) . '</b>'); ?></p>
 <?php     if (!empty($ranking['players'])) { ?>
 	<p class="rnd-big" id="rnd_winner"><?php echo sprintf(RND_RESULTS_WINNER, rnd_h($ranking['players'][0]['username'])); ?></p>
 <?php     } ?>
@@ -178,7 +178,7 @@ include("Templates/Round/outgame_top.tpl");
 </table>
 <?php } ?>
 
-<p class="rnd-muted"><?php echo sprintf(RND_RESULTS_SNAPSHOT, date('d.m.Y H:i', (int) $snapshot['taken_at'])); ?></p>
+<p class="rnd-muted"><?php echo sprintf(RND_RESULTS_SNAPSHOT, RoundControl::fmt((int) $snapshot['taken_at'])); ?></p>
 <?php } // snapshot ?>
 <?php if ($ended) { ?>
 <p><?php echo RND_RESULTS_VIEW_ONLY; ?>

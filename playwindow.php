@@ -44,7 +44,7 @@ include("Templates/Round/outgame_top.tpl");
 
 <div class="rnd-box rnd-center">
 	<p class="rnd-big"><?php echo htmlspecialchars(RoundControl::windowLabel(), ENT_QUOTES, 'UTF-8'); ?> <span class="rnd-muted">(<?php echo RND_SERVER_TIME . ', ' . htmlspecialchars(date_default_timezone_get(), ENT_QUOTES, 'UTF-8'); ?>)</span></p>
-	<p><?php echo RND_WAIT_NEXT; ?> <b id="rnd_next_open"><?php echo date('d.m.Y H:i', $nextOpen); ?></b> <?php echo RND_WAIT_IN; ?></p>
+	<p><?php echo RND_WAIT_NEXT; ?> <b id="rnd_next_open"><?php echo RoundControl::fmt($nextOpen); ?></b> <?php echo RND_WAIT_IN; ?></p>
 	<p class="rnd-count"><span class="rnd-countdown" id="rnd_countdown" data-left="<?php echo (int) ($nextOpen - $now); ?>" data-done-url="dorf1.php"><?php echo gmdate('H:i:s', max(0, $nextOpen - $now)); ?></span></p>
 	<p class="rnd-muted"><?php echo SERVER_TIME; ?> <?php echo date('H:i:s', $now); ?></p>
 </div>

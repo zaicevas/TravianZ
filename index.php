@@ -82,6 +82,15 @@ AccessLogger::logRequest();
 		#server_info td {font-weight:bold; color:#333;}
 		#server_info .sep th {padding-top:6px; color:#71d000; font-weight:bold;}
 		#server_info p {margin:6px 0 0; font-size:11px;}
+		#rnd_key_dates {background:#fff8e1; border:2px solid #e2b33c; border-radius:8px; margin:0 0 12px; padding:10px 14px 8px; box-shadow:0 1px 4px rgba(0,0,0,.15);}
+		#rnd_key_dates .kd-block {display:inline-block; vertical-align:top; width:49%;}
+		#rnd_key_dates .kd-label {color:#71a000; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px;}
+		#rnd_key_dates .kd-big {color:#9c0f19; font-size:19px; font-weight:bold; line-height:26px; white-space:nowrap;}
+		#rnd_key_dates .kd-sub {color:#555; font-size:11px; line-height:14px; min-height:14px;}
+		#rnd_key_dates .kd-open {background:#71d000; border-radius:3px; color:#fff; font-weight:bold; padding:0 4px;}
+		#rnd_key_dates .kd-more {border-spacing:0; border-top:1px solid #ecd9a0; margin-top:7px; padding-top:5px; width:100%;}
+		#rnd_key_dates .kd-more th {color:#555; font-size:11px; font-weight:normal; text-align:left; width:48%;}
+		#rnd_key_dates .kd-more td {color:#333; font-size:11px; font-weight:bold;}
 	</style>
 </head>
 
@@ -197,14 +206,9 @@ AccessLogger::logRequest();
 						[RND_INFO_MAP_SIZE, sprintf(RND_INFO_MAP_SIZE_VALUE, (int) WORLD_MAX, 2 * (int) WORLD_MAX + 1)],
 						[RND_INFO_START_REGION, $rcQuadrant ? RoundControl::QUADRANTS[$rcQuadrant] : RND_INFO_START_REGION_FREE],
 						[RND_INFO_PROTECTION, round(PROTECTION / 3600) . ' ' . RND_HOURS],
-						[RND_INFO_PLAY_WINDOW, RoundControl::windowEnabled() ? sprintf(RND_INFO_PLAY_WINDOW_VALUE, RoundControl::windowLabel()) : RND_INFO_ALWAYS_OPEN],
 						[RND_INFO_GOLD_HEAD, null],
 						[RND_INFO_START_GOLD, $rcGoldStart],
 						[RND_INFO_WEEKLY_GOLD, $rcGoldWeekly > 0 ? sprintf(RND_INFO_WEEKLY_GOLD_VALUE, $rcGoldWeekly) : RND_OFF],
-						[RND_INFO_DATES_HEAD, null],
-						[RND_INFO_ROUND_START, date('d.m.Y H:i', RoundControl::roundStart())],
-						[RND_INFO_ARTIFACTS, date('d.m.Y H:i', RoundControl::artifactsDate())],
-						[RND_INFO_ROUND_END, date('d.m.Y H:i', RoundControl::roundEnd())],
 						[RND_INFO_STATS_HEAD, null],
 						[RND_INFO_VILLAGES, (int) $rcStats['villages']],
 						[RND_INFO_POPULATION, number_format((int) $rcStats['pop'])],
@@ -235,6 +239,41 @@ AccessLogger::logRequest();
 					</div>
 				</div>
 				<div class="secondarybox">
+					<?php
+					// Key dates panel: round start and play window first, the rest below
+					$kdNow     = time();
+					$kdStart   = RoundControl::roundStart();
+					$kdEnd     = RoundControl::roundEnd();
+					$kdStarted = $kdStart && $kdNow >= $kdStart;
+					$kdEnded   = RoundControl::isRoundOver($kdNow);
+					if ($kdEnded) {
+						$kdLabel = RND_KEY_ENDED;
+						$kdSub   = '<a href="results.php">' . RND_RESULTS_TITLE . '</a>';
+					} elseif ($kdStarted) {
+						$kdLabel = RND_KEY_STARTED;
+						$kdSub   = htmlspecialchars(sprintf(RND_KEY_RUNNING, RoundControl::durationText($kdEnd - $kdNow)), ENT_QUOTES, 'UTF-8');
+					} else {
+						$kdLabel = RND_KEY_STARTS;
+						$kdSub   = htmlspecialchars(sprintf(RND_KEY_IN, RoundControl::durationText($kdStart - $kdNow)), ENT_QUOTES, 'UTF-8');
+					}
+					$kdWindow = RoundControl::windowEnabled();
+					?>
+					<div id="rnd_key_dates">
+						<div class="kd-block">
+							<div class="kd-label"><?php echo htmlspecialchars($kdLabel, ENT_QUOTES, 'UTF-8'); ?></div>
+							<div class="kd-big" id="rnd_key_start"><?php echo RoundControl::fmt($kdStart); ?></div>
+							<div class="kd-sub" id="rnd_key_start_sub"><?php echo $kdSub; ?></div>
+						</div>
+						<div class="kd-block">
+							<div class="kd-label"><?php echo RND_KEY_WINDOW; ?></div>
+							<div class="kd-big" id="rnd_key_window"><?php echo htmlspecialchars($kdWindow ? str_replace(' - ', ' &ndash; ', RoundControl::windowLabel()) : RND_INFO_ALWAYS_OPEN, ENT_QUOTES, 'UTF-8', false); ?></div>
+							<div class="kd-sub"><?php if ($kdWindow) { echo htmlspecialchars(sprintf(RND_KEY_WINDOW_DAILY, date_default_timezone_get()), ENT_QUOTES, 'UTF-8'); if ($kdStarted && !$kdEnded && RoundControl::isWindowOpen($kdNow)) { ?> <span class="kd-open" id="rnd_key_window_open"><?php echo RND_KEY_WINDOW_OPEN; ?></span><?php } } ?></div>
+						</div>
+						<table class="kd-more">
+							<tr><th><?php echo RND_INFO_ARTIFACTS; ?>:</th><td id="rnd_key_artifacts"><?php echo RoundControl::fmt(RoundControl::artifactsDate()); ?></td></tr>
+							<tr><th><?php echo RND_INFO_ROUND_END; ?>:</th><td id="rnd_key_end"><?php echo RoundControl::fmt($kdEnd); ?></td></tr>
+						</table>
+					</div>
 					<div id="screenshots">
 						<h2><?php echo SCREENSHOTS; ?></h2>
 						<a href="#last" class="navi prev dynamic_btn"><img class="dynamic_btn" src="img/x.gif" alt="previous" /></a>
