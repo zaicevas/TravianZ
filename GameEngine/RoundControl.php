@@ -275,16 +275,18 @@ class RoundControl
         $d = intdiv($m, 1440);
         $h = intdiv($m % 1440, 60);
         $m = $m % 60;
-        $unit = function ($n, $one, $many) {
-            return $n . ' ' . ($n === 1 ? $one : $many);
+        // English fallback when no language file is loaded (CLI, cron)
+        $unit = function ($n, $word) {
+            $c = 'RND_' . strtoupper($word) . ($n === 1 ? '' : 'S');
+            return $n . ' ' . (defined($c) ? constant($c) : $word . ($n === 1 ? '' : 's'));
         };
         if ($d > 0) {
-            return $unit($d, RND_DAY, RND_DAYS) . ($h > 0 ? ' ' . $unit($h, RND_HOUR, RND_HOURS) : '');
+            return $unit($d, 'day') . ($h > 0 ? ' ' . $unit($h, 'hour') : '');
         }
         if ($h > 0) {
-            return $unit($h, RND_HOUR, RND_HOURS) . ($m > 0 ? ' ' . $unit($m, RND_MINUTE, RND_MINUTES) : '');
+            return $unit($h, 'hour') . ($m > 0 ? ' ' . $unit($m, 'minute') : '');
         }
-        return $unit($m, RND_MINUTE, RND_MINUTES);
+        return $unit($m, 'minute');
     }
 
     /** Round start (START_DATE + START_TIME, server timezone). */
