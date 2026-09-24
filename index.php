@@ -198,7 +198,7 @@ AccessLogger::logRequest();
 					<?php
 					// Server information box (round settings from RoundControl, speeds from config.php)
 					$rcStats = ['villages' => 0, 'pop' => 0];
-					$return = mysqli_query($link, "SELECT COUNT(v.wref) AS villages, IFNULL(SUM(v.pop), 0) AS pop FROM " . TB_PREFIX . "vdata v JOIN " . TB_PREFIX . "users u ON u.id = v.owner WHERE u.id > 5 AND u.tribe IN(1, 2, 3, 6, 7, 8, 9)");
+					$return = mysqli_query($link, "SELECT COUNT(v.wref) AS villages, IFNULL(SUM(v.pop), 0) AS pop FROM " . TB_PREFIX . "vdata v JOIN " . TB_PREFIX . "users u ON u.id = v.owner WHERE u.id > 5 AND u.access > 0 AND u.access < " . ((defined('INCLUDE_ADMIN') && INCLUDE_ADMIN) ? 10 : RoundControl::STAFF_ACCESS) . " AND u.tribe IN(1, 2, 3, 6, 7, 8, 9)");
 					if (!empty($return)) {
 						$rcStats = mysqli_fetch_assoc($return);
 					}
@@ -223,7 +223,6 @@ AccessLogger::logRequest();
 						[RND_INFO_GOLD_HEAD, null],
 						[RND_INFO_START_GOLD, $rcGoldStart],
 						[RND_INFO_WEEKLY_GOLD, $rcGoldWeekly > 0 ? sprintf(RND_INFO_WEEKLY_GOLD_VALUE, $rcGoldWeekly) : RND_OFF],
-						[RND_INFO_INVITE_BONUS, RND_INFO_INVITE_BONUS_VALUE],
 						[RND_INFO_STATS_HEAD, null],
 						[RND_INFO_VILLAGES, (int) $rcStats['villages']],
 						[RND_INFO_POPULATION, number_format((int) $rcStats['pop'])],

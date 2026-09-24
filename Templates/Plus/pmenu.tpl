@@ -32,6 +32,6 @@ function sel($cond){ return $cond ? 'class="selected"' : ''; }
  | <a href="plus.php?id=2" <?= sel($id==2) ?>><?php echo TZ_ADVANTAGES; ?></a>
  | <a href="plus.php?id=3" <?= sel($id==3 || ($id>=6 && $id<=15)) ?>><?php echo GOLD; ?></a>
  | <a href="plus.php?id=4" <?= sel($id==4) ?>><?php echo FAQ; ?></a>
- | <a href="plus.php?id=5" <?= sel($id==5) ?>><?php echo TZ_EARN_GOLD; ?></a>
+ | <a href="plus.php?id=5" <?= sel($id==5) ?>><?php echo RND_INVITE_TAB; ?></a>
  | <a href="a2b2.php" <?= sel($uri==='a2b2.php') ?>><?php echo TZ_ACCOUNT_STATEMENT; ?></a>
 </div>

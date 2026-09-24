@@ -176,7 +176,7 @@ class Automation {
         
         $this->MasterBuilder();
         $this->updateGeneralAttack();
-        $this->checkInvitedPlayes();
+        // No invite gold on this server: invites are only counted (homepage list).
         $this->updateStore();
 
         // Finalizeaza upgrade-urile de bonus de alianta ajunse la termen.

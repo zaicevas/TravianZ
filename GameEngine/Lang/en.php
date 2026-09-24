@@ -4482,8 +4482,11 @@ tz_def('RND_INFO_ROUND_END',         'Round end');
 tz_def('RND_INFO_STATS_HEAD',        'World stats');
 tz_def('RND_INFO_VILLAGES',          'Villages');
 tz_def('RND_INFO_POPULATION',        'Population');
-tz_def('RND_INFO_INVITE_BONUS',       'Invite bonus');
-tz_def('RND_INFO_INVITE_BONUS_VALUE', '50 per friend (when they found a 2nd village)');
+// Plus > Invite friends (no gold on this server)
+tz_def('RND_INVITE_TAB',             'Invite friends');
+tz_def('RND_INVITE_TITLE',           'Invite friends');
+tz_def('RND_INVITE_TEXT',            'Share your personal link. Friends who register with it are shown as invited by you in the player list on the homepage. There is no gold reward for invites on this server.');
+tz_def('RND_INVITE_LINK',            'Your personal link');
 tz_def('RND_INFO_ATTACKS_TODAY',      'Attacks today');
 tz_def('RND_INFO_TRIBES_HEAD',        'Tribes');
 tz_def('RND_INFO_TRIBE_VALUE',        '%d (%s%%)');
