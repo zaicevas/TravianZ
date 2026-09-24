@@ -329,7 +329,8 @@ trait DatabaseUserQueries {
 	function getInvitedUser($uid) {
 	    list($uid) = $this->escape_input((int) $uid);
 
-		$q = "SELECT * FROM " . TB_PREFIX . "users where invited = $uid order by regtime desc";
+		// negative = the invite bonus has been paid (checkInvitedPlayes)
+		$q = "SELECT * FROM " . TB_PREFIX . "users where invited IN ($uid, -$uid) order by regtime desc";
 		$result = mysqli_query($this->dblink,$q);
 		return $this->mysqli_fetch_all($result);
 	}

@@ -973,7 +973,7 @@ class RoundControl
         }
         $maxAccess = (defined('INCLUDE_ADMIN') && INCLUDE_ADMIN) ? 10 : self::STAFF_ACCESS;
         $q = "SELECT u.username, u.tribe, w.x, w.y,
-                (SELECT COUNT(*) FROM `" . TB_PREFIX . "users` i WHERE i.invited = u.id) AS invited
+                (SELECT COUNT(*) FROM `" . TB_PREFIX . "users` i WHERE i.invited IN (u.id, -u.id)) AS invited
             FROM `" . TB_PREFIX . "users` u
             LEFT JOIN `" . TB_PREFIX . "vdata` v ON v.owner = u.id AND v.capital = 1
             LEFT JOIN `" . TB_PREFIX . "wdata` w ON w.id = v.wref

@@ -115,7 +115,9 @@ trait AutomationAccountMaintenance {
                     $usergold = $database->getUserField($user['invited'],"gold",0);
                     $gold = $usergold+50;
                     $database->updateUserField($user['invited'],"gold",$gold,1);
-                    $database->updateUserField($user['id'],"invited",0,1);
+                    // Paid: keep who invited them as a negative id (never paid
+                    // again, still counted on the homepage and the invite page).
+                    $database->updateUserField($user['id'],"invited",-(int) $user['invited'],1);
                 }
             }
         }
