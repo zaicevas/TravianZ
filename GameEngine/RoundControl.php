@@ -946,6 +946,59 @@ class RoundControl
     }
 
     /**
+     * Quadrant of a tile: 1 (-|+), 2 (+|+), 3 (-|-), 4 (+|-), 0 for the centre
+     * tile. Same bounds as the registration sectors (DatabaseVillageQueries).
+     */
+    public static function quadrantOf($x, $y)
+    {
+        $x = (int) $x;
+        $y = (int) $y;
+        if ($x < 0 && $y >= 0) return 1;
+        if ($x >= 0 && $y > 0) return 2;
+        if ($x <= 0 && $y < 0) return 3;
+        if ($x > 0 && $y <= 0) return 4;
+        return 0;
+    }
+
+    /**
+     * Players for the homepage list, by name: username, tribe, how many
+     * accounts they invited, quadrant of their capital (0 = none/centre).
+     * Same accounts as the population ranking: no system, staff or banned.
+     */
+    public static function registeredPlayers()
+    {
+        $link = self::link();
+        if (!$link) {
+            return [];
+        }
+        $maxAccess = (defined('INCLUDE_ADMIN') && INCLUDE_ADMIN) ? 10 : self::STAFF_ACCESS;
+        $q = "SELECT u.username, u.tribe, w.x, w.y,
+                (SELECT COUNT(*) FROM `" . TB_PREFIX . "users` i WHERE i.invited = u.id) AS invited
+            FROM `" . TB_PREFIX . "users` u
+            LEFT JOIN `" . TB_PREFIX . "vdata` v ON v.owner = u.id AND v.capital = 1
+            LEFT JOIN `" . TB_PREFIX . "wdata` w ON w.id = v.wref
+            WHERE u.id > 5 AND u.access > 0 AND u.access < " . (int) $maxAccess . " AND u.tribe IN (1,2,3,6,7,8,9)";
+        $out = [];
+        try {
+            $res = mysqli_query($link, $q);
+            while ($res && ($row = mysqli_fetch_assoc($res))) {
+                $out[] = [
+                    'username' => (string) $row['username'],
+                    'tribe'    => (int) $row['tribe'],
+                    'invited'  => (int) $row['invited'],
+                    'quadrant' => $row['x'] === null ? 0 : self::quadrantOf($row['x'], $row['y']),
+                ];
+            }
+        } catch (\Throwable $e) {
+            return [];
+        }
+        usort($out, function ($a, $b) {
+            return strcasecmp($a['username'], $b['username']) ?: strcmp($a['username'], $b['username']);
+        });
+        return $out;
+    }
+
+    /**
      * Does this artifact count for the race? Not when it is held by the Natars
      * or another system account (id <= 5) or by staff (access >= 8, Support,
      * Multihunter - the same accounts that get no weekly gold).

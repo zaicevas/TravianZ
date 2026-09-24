@@ -82,6 +82,14 @@ AccessLogger::logRequest();
 		#server_info td {font-weight:bold; color:#333;}
 		#server_info .sep th {padding-top:6px; color:#71d000; font-weight:bold;}
 		#server_info p {margin:6px 0 0; font-size:11px;}
+		#rnd_players {background:#efefef; padding:14px 15px 12px;}
+		#rnd_players h2 {color:#71d000; font-size:15px; font-weight:bold; margin:0 0 8px; text-align:center;}
+		#rnd_players table {background:#fff; border-collapse:collapse; width:100%;}
+		#rnd_players th, #rnd_players td {border:1px solid #c8c8c8; font-size:11px; line-height:16px; padding:2px 6px;}
+		#rnd_players th {background:#f7f7f7; font-weight:normal; text-align:center;}
+		#rnd_players td.rp-num {text-align:center; white-space:nowrap;}
+		#rnd_players tfoot td {background:#f7f7f7; color:#444; text-align:center;}
+		#rnd_players .rp-none {color:#555; font-size:11px; text-align:center;}
 		#rnd_key_dates {background:#fff8e1; border:2px solid #e2b33c; border-radius:8px; margin:0 0 12px; padding:10px 14px 8px; box-shadow:0 1px 4px rgba(0,0,0,.15);}
 		#rnd_key_dates .kd-block {display:inline-block; vertical-align:top; width:49%;}
 		#rnd_key_dates .kd-label {color:#71a000; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:.5px;}
@@ -288,6 +296,36 @@ AccessLogger::logRequest();
 								<li><a href="#"><img src="img/un/s/s8s.jpg" alt="Screenshot" /></a></li>
 							</ul>
 						</div><a href="#next" class="navi next"><img class="dynamic_btn" src="img/x.gif" alt="next" /></a>
+					</div>
+					<?php
+					$rpList   = RoundControl::registeredPlayers();
+					$rpCounts = [1 => 0, 2 => 0, 3 => 0, 4 => 0];
+					foreach ($rpList as $rp) {
+						if ($rp['quadrant']) $rpCounts[$rp['quadrant']]++;
+					}
+					$rpH = function ($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); };
+					?>
+					<div id="rnd_players">
+						<h2><?php echo RND_PLAYERS_TITLE; ?></h2>
+<?php if (!$rpList) { ?>
+						<p class="rp-none"><?php echo RND_PLAYERS_NONE; ?></p>
+<?php } else { ?>
+						<table id="rnd_players_table">
+							<thead><tr><th><?php echo RND_PLAYERS_PLAYER; ?></th><th><?php echo RND_PLAYERS_INVITED; ?></th><th><?php echo RND_PLAYERS_QUADRANT; ?></th></tr></thead>
+							<tbody>
+<?php     foreach ($rpList as $rp) { ?>
+								<tr><td class="rp-name"><?php echo $rpH($rp['username']); ?> (<?php echo $rpH(defined('TRIBE' . $rp['tribe']) ? constant('TRIBE' . $rp['tribe']) : '?'); ?>)</td><td class="rp-num"><?php echo (int) $rp['invited']; ?></td><td class="rp-num"><?php echo $rp['quadrant'] ? trim(RoundControl::QUADRANTS[$rp['quadrant']], '()') : '-'; ?></td></tr>
+<?php     } ?>
+							</tbody>
+							<tfoot><tr><td colspan="3" id="rnd_players_quadrants"><?php
+								$rpParts = [];
+								foreach ($rpCounts as $qid => $n) {
+									$rpParts[] = sprintf(RND_PLAYERS_AT, $n, trim(RoundControl::QUADRANTS[$qid], '()'));
+								}
+								echo $rpH(implode(' · ', $rpParts));
+							?></td></tr></tfoot>
+						</table>
+<?php } ?>
 					</div>
 					<div id="newsbox">
 						<h2><?php echo NEWS; ?></h2>

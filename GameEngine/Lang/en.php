@@ -4483,6 +4483,13 @@ tz_def('RND_INFO_STATS_HEAD',        'World stats');
 tz_def('RND_INFO_VILLAGES',          'Villages');
 tz_def('RND_INFO_POPULATION',        'Population');
 tz_def('RND_INFO_READ_GUIDE',        'Read the server guide');
+// homepage registered players list
+tz_def('RND_PLAYERS_TITLE',          'Registered players');
+tz_def('RND_PLAYERS_PLAYER',         'Player');
+tz_def('RND_PLAYERS_INVITED',        'Invited');
+tz_def('RND_PLAYERS_QUADRANT',       'Quadrant');
+tz_def('RND_PLAYERS_NONE',           'No players registered yet.');
+tz_def('RND_PLAYERS_AT',             '%d at %s');
 // homepage key dates panel
 tz_def('RND_KEY_STARTS',             'Round starts');
 tz_def('RND_KEY_STARTED',            'Round started');
