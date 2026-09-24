@@ -69,7 +69,7 @@ if (isset($_POST['redeem_code']) && class_exists('GoldShop')) {
 	            break;
 
 	        case '5':
-	            echo 'Earn Gold';
+	            echo RND_INVITE_TITLE;
 	            break;
 	    }
 	} else {
