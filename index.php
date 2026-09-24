@@ -205,6 +205,12 @@ AccessLogger::logRequest();
 					$rcGoldStart  = (defined('NEW_FUNCTION_REGISTRATION_GOLD') && NEW_FUNCTION_REGISTRATION_GOLD) ? (int) NEW_FUNCTION_REGISTRATION_GOLD_VALUE : 0;
 					$rcGoldWeekly = (int) RoundControl::get('weekly_gold');
 					$rcQuadrant   = RoundControl::fixedQuadrant();
+					$rpList       = RoundControl::registeredPlayers();
+					$rcTribes     = [1 => 0, 2 => 0, 3 => 0];
+					foreach ($rpList as $rp) {
+						$rcTribes[$rp['tribe']] = ($rcTribes[$rp['tribe']] ?? 0) + 1;
+					}
+					ksort($rcTribes);
 					$rcRows = [
 						[RND_INFO_SPEED_HEAD, null],
 						[RND_INFO_GAME_SPEED, SPEED . 'x'],
@@ -217,10 +223,17 @@ AccessLogger::logRequest();
 						[RND_INFO_GOLD_HEAD, null],
 						[RND_INFO_START_GOLD, $rcGoldStart],
 						[RND_INFO_WEEKLY_GOLD, $rcGoldWeekly > 0 ? sprintf(RND_INFO_WEEKLY_GOLD_VALUE, $rcGoldWeekly) : RND_OFF],
+						[RND_INFO_INVITE_BONUS, RND_INFO_INVITE_BONUS_VALUE],
 						[RND_INFO_STATS_HEAD, null],
 						[RND_INFO_VILLAGES, (int) $rcStats['villages']],
 						[RND_INFO_POPULATION, number_format((int) $rcStats['pop'])],
+						[RND_INFO_ATTACKS_TODAY, RoundControl::attacksSince(mktime(0, 0, 0))],
+						[RND_INFO_TRIBES_HEAD, null],
 					];
+					foreach ($rcTribes as $rcTribe => $rcN) {
+						$rcRows[] = [defined('TRIBE' . $rcTribe) ? constant('TRIBE' . $rcTribe) : '?',
+							sprintf(RND_INFO_TRIBE_VALUE, $rcN, $rpList ? number_format(100 * $rcN / count($rpList), 1) : '0')];
+					}
 					?>
 					<div id="server_info">
 						<h2><?php echo RND_INFO_TITLE; ?></h2>
@@ -298,7 +311,6 @@ AccessLogger::logRequest();
 						</div><a href="#next" class="navi next"><img class="dynamic_btn" src="img/x.gif" alt="next" /></a>
 					</div>
 					<?php
-					$rpList   = RoundControl::registeredPlayers();
 					$rpCounts = [1 => 0, 2 => 0, 3 => 0, 4 => 0];
 					foreach ($rpList as $rp) {
 						if ($rp['quadrant']) $rpCounts[$rp['quadrant']]++;

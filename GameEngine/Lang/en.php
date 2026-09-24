@@ -4482,6 +4482,11 @@ tz_def('RND_INFO_ROUND_END',         'Round end');
 tz_def('RND_INFO_STATS_HEAD',        'World stats');
 tz_def('RND_INFO_VILLAGES',          'Villages');
 tz_def('RND_INFO_POPULATION',        'Population');
+tz_def('RND_INFO_INVITE_BONUS',       'Invite bonus');
+tz_def('RND_INFO_INVITE_BONUS_VALUE', '50 per friend (when they found a 2nd village)');
+tz_def('RND_INFO_ATTACKS_TODAY',      'Attacks today');
+tz_def('RND_INFO_TRIBES_HEAD',        'Tribes');
+tz_def('RND_INFO_TRIBE_VALUE',        '%d (%s%%)');
 tz_def('RND_INFO_READ_GUIDE',        'Read the server guide');
 // homepage registered players list
 tz_def('RND_PLAYERS_TITLE',          'Registered players');

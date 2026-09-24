@@ -961,6 +961,30 @@ class RoundControl
     }
 
     /**
+     * Normal attacks and raids (attack_type 3, 4) that players (not system
+     * accounts) sent since $since. Reinforcements are not counted.
+     */
+    public static function attacksSince($since)
+    {
+        $link = self::link();
+        if (!$link) {
+            return 0;
+        }
+        $q = "SELECT COUNT(*) AS n
+            FROM `" . TB_PREFIX . "movement` m
+            JOIN `" . TB_PREFIX . "attacks` a ON a.id = m.ref
+            JOIN `" . TB_PREFIX . "vdata` v ON v.wref = m.`from`
+            WHERE m.sort_type = 3 AND a.attack_type IN (3, 4) AND v.owner > 5 AND m.starttime >= " . (int) $since;
+        try {
+            $res = mysqli_query($link, $q);
+            $row = $res ? mysqli_fetch_assoc($res) : null;
+            return $row ? (int) $row['n'] : 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
      * Players for the homepage list, by name: username, tribe, how many
      * accounts they invited, quadrant of their capital (0 = none/centre).
      * Same accounts as the population ranking: no system, staff or banned.
