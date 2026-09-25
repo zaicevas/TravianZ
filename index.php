@@ -99,7 +99,9 @@ AccessLogger::logRequest();
 		#rnd_key_dates .kd-countdown {background:#9c0f19; border-radius:5px; color:#fff; font-size:12px; margin-top:8px; padding:6px 10px; text-align:center;}
 		#rnd_key_dates .kd-cd-closes {background:#4e9a06;}
 		#rnd_key_dates .kd-cd-time {display:inline-block; font-size:17px; font-weight:bold; letter-spacing:.5px; margin:0 4px; min-width:9em;}
-		#rnd_key_dates .kd-cd-at {color:#f3d6d8; font-size:11px;}
+		#rnd_key_dates .kd-cd-label {vertical-align:middle;}
+		#rnd_key_dates .kd-cd-right {display:inline-block; text-align:center; vertical-align:middle;}
+		#rnd_key_dates .kd-cd-at {color:#f3d6d8; display:block; font-size:11px;}
 		#rnd_key_dates .kd-cd-closes .kd-cd-at {color:#e0f2cf;}
 		#rnd_key_dates .kd-more {border-spacing:0; border-top:1px solid #ecd9a0; margin-top:7px; padding-top:5px; width:100%;}
 		#rnd_key_dates .kd-more th {color:#555; font-size:11px; font-weight:normal; text-align:left; width:48%;}
@@ -298,8 +300,8 @@ AccessLogger::logRequest();
 <?php if ($kdCd) { ?>
 						<div class="kd-countdown kd-cd-<?php echo $kdCd['mode']; ?>" id="rnd_key_countdown_box">
 							<span class="kd-cd-label"><?php echo $kdCdText[$kdCd['mode']]; ?></span>
-							<span class="kd-cd-time" id="rnd_key_countdown" data-left="<?php echo (int) ($kdCd['at'] - $kdNow); ?>"><?php echo RoundControl::countdownText($kdCd['at'] - $kdNow); ?></span>
-							<span class="kd-cd-at" id="rnd_key_countdown_at">(<?php echo RoundControl::fmt($kdCd['at']); ?>)</span>
+							<span class="kd-cd-right"><span class="kd-cd-time" id="rnd_key_countdown" data-left="<?php echo (int) ($kdCd['at'] - $kdNow); ?>"><?php echo RoundControl::countdownText($kdCd['at'] - $kdNow); ?></span>
+							<span class="kd-cd-at" id="rnd_key_countdown_at">(<?php echo RoundControl::fmt($kdCd['at']); ?>)</span></span>
 						</div>
 						<script type="text/javascript">
 						(function () {
