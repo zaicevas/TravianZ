@@ -45,7 +45,6 @@
 <a href="index.php" class="home"><img src="img/x.gif" alt="Travian"/></a>
 	<table class="menu">
 	<tr>
-		<td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
 		<td><a href="anleitung.php"><span><?php echo PUBLIC_MANUAL; ?></span></a></td>
 		<td><a href="guide.php"><span><?php echo RND_GUIDE; ?></span></a></td>
 <?php if (!empty($rndLoggedIn)) { ?>

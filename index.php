@@ -117,7 +117,6 @@ AccessLogger::logRequest();
 			<a href="index.php" class="home"><img src="img/x.gif" alt="Travian" /></a>
 			<table class="menu">
 				<tr>
-					<td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
 					<td><a href="anleitung.php"><span><?php echo $lang['index'][0][2]; ?></span></a></td>
 					<td><a href="guide.php"><span><?php echo RND_GUIDE; ?></span></a></td>
 					<td><a href="?signup" class="signup_link mark"><span><?php echo $lang['register']; ?></span></a></td>
@@ -315,6 +314,7 @@ AccessLogger::logRequest();
 						if ($rp['quadrant']) $rpCounts[$rp['quadrant']]++;
 					}
 					$rpH = function ($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); };
+					$rpShowQuadrant = !RoundControl::fixedQuadrant();   // everyone starts in the same quadrant otherwise
 					?>
 					<div id="rnd_players">
 						<h2><?php echo RND_PLAYERS_TITLE; ?></h2>
@@ -322,12 +322,13 @@ AccessLogger::logRequest();
 						<p class="rp-none"><?php echo RND_PLAYERS_NONE; ?></p>
 <?php } else { ?>
 						<table id="rnd_players_table">
-							<thead><tr><th><?php echo RND_PLAYERS_PLAYER; ?></th><th><?php echo RND_PLAYERS_INVITED; ?></th><th><?php echo RND_PLAYERS_QUADRANT; ?></th></tr></thead>
+							<thead><tr><th><?php echo RND_PLAYERS_PLAYER; ?></th><th><?php echo RND_PLAYERS_INVITED; ?></th><?php if ($rpShowQuadrant) { ?><th><?php echo RND_PLAYERS_QUADRANT; ?></th><?php } ?></tr></thead>
 							<tbody>
 <?php     foreach ($rpList as $rp) { ?>
-								<tr><td class="rp-name"><?php echo $rpH($rp['username']); ?> (<?php echo $rpH(defined('TRIBE' . $rp['tribe']) ? constant('TRIBE' . $rp['tribe']) : '?'); ?>)</td><td class="rp-num"><?php echo (int) $rp['invited']; ?></td><td class="rp-num"><?php echo $rp['quadrant'] ? trim(RoundControl::QUADRANTS[$rp['quadrant']], '()') : '-'; ?></td></tr>
+								<tr><td class="rp-name"><?php echo $rpH($rp['username']); ?> (<?php echo $rpH(defined('TRIBE' . $rp['tribe']) ? constant('TRIBE' . $rp['tribe']) : '?'); ?>)</td><td class="rp-num"><?php echo (int) $rp['invited']; ?></td><?php if ($rpShowQuadrant) { ?><td class="rp-num"><?php echo $rp['quadrant'] ? trim(RoundControl::QUADRANTS[$rp['quadrant']], '()') : '-'; ?></td><?php } ?></tr>
 <?php     } ?>
 							</tbody>
+<?php     if ($rpShowQuadrant) { ?>
 							<tfoot><tr><td colspan="3" id="rnd_players_quadrants"><?php
 								$rpParts = [];
 								foreach ($rpCounts as $qid => $n) {
@@ -335,6 +336,7 @@ AccessLogger::logRequest();
 								}
 								echo $rpH(implode(' · ', $rpParts));
 							?></td></tr></tfoot>
+<?php     } ?>
 						</table>
 <?php } ?>
 					</div>

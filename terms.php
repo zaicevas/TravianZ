@@ -100,7 +100,6 @@ AccessLogger::logRequest();
 
         <table class="menu">
             <tr>
-                <td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
                 <td><a href="anleitung.php"><span><?php echo PUBLIC_MANUAL; ?></span></a></td>
                 <td><a href="guide.php"><span><?php echo RND_GUIDE; ?></span></a></td>
                 <td><a href="index.php?signup"><span><?php echo PUBLIC_REGISTER; ?></span></a></td>

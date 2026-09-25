@@ -59,7 +59,6 @@ AccessLogger::logRequest();
 
 	<tr>
 
-		<td><a href="tutorial.php"><span><?php echo TUTORIAL; ?></span></a></td>
 
 		<td><a href="anleitung.php"><span><?php echo PUBLIC_MANUAL; ?></span></a></td>
 
