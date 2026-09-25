@@ -68,9 +68,27 @@ if (!$errors && $new['window_start'] === $new['window_end']) {
 
 $old = RoundControl::all();
 
-if (!$errors && $new['round_days'] !== $old['round_days']) {
-    $now    = time();
-    $newEnd = RoundControl::roundEnd((int) $new['round_days']);
+// Round start (config.php). Missing fields = unchanged. Only before the round
+// has started, and only to a time in the future.
+$now       = time();
+$oldStart  = RoundControl::roundStart();
+$newStart  = null;
+if (isset($_POST['start_date'], $_POST['start_time'])
+    && (trim((string) $_POST['start_date']) !== date('Y-m-d', $oldStart) || trim((string) $_POST['start_time']) !== date('H:i', $oldStart))) {
+    $newStart = RoundControl::parseStart($_POST['start_date'], $_POST['start_time']);
+    if ($newStart === null) {
+        $errors[] = 'The round start must be a valid date and time (HH:MM).';
+    } elseif ($oldStart && $now >= $oldStart) {
+        $errors[] = 'The round has already started on ' . RoundControl::fmt($oldStart)
+            . '; the start can no longer be changed here.';
+    } elseif ($newStart <= $now) {
+        $errors[] = 'The new round start ' . RoundControl::fmt($newStart) . ' is in the past. Choose a later time.';
+    }
+}
+$startTs = $newStart ?? $oldStart;
+
+if (!$errors && ($new['round_days'] !== $old['round_days'] || $newStart !== null)) {
+    $newEnd = RoundControl::addDays($startTs, (int) $new['round_days']);
 
     if (RoundControl::isRoundOver($now)) {
         $errors[] = 'The round has already ended on ' . RoundControl::fmt(RoundControl::roundEnd())
@@ -78,7 +96,7 @@ if (!$errors && $new['round_days'] !== $old['round_days']) {
     } elseif ($newEnd <= $now) {
         $errors[] = 'With ' . (int) $new['round_days'] . ' days the round would end on ' . RoundControl::fmt($newEnd)
             . ', which is in the past. Choose a later end.';
-    } elseif ($newEnd <= RoundControl::roundStart()) {
+    } elseif ($newEnd <= $startTs) {
         $errors[] = 'The round end must be after the round start.';
     }
 }
@@ -89,6 +107,12 @@ if ($errors) {
 
 // ---- save --------------------------------------------------------------------
 $changed = [];
+if ($newStart !== null) {
+    if (!RoundControl::writeStart($newStart, $autoprefix . 'GameEngine/config.php')) {
+        roundSettings_back(false, 'Could not write the round start to GameEngine/config.php (file permissions?). Nothing was saved.');
+    }
+    $changed[] = 'round start: ' . RoundControl::fmt($oldStart) . ' -> ' . RoundControl::fmt($newStart);
+}
 foreach ($new as $name => $value) {
     if ($value !== $old[$name]) {
         if (!RoundControl::set($name, $value)) {

@@ -31,6 +31,9 @@
 	body.contentPage #content table.rnd-table td.num, body.contentPage #content table.rnd-table th.num {text-align: center;}
 	body.contentPage #content table.rnd-table tr.rnd-first td {background: #fdf6d8; font-weight: bold;}
 	body.contentPage #content .rnd-muted {color: #777; font-size: 11px;}
+	body.contentPage #content .rnd-new {color: #c00; font-weight: bold;}
+	body.contentPage #content #rnd_wait_meanwhile ul {margin: 6px 0 6px 20px; padding: 0;}
+	body.contentPage #content #rnd_wait_meanwhile li {margin: 3px 0;}
 	</style>
 </head>
 <body class="webkit contentPage">

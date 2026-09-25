@@ -4518,6 +4518,15 @@ tz_def('RND_WAIT_INTRO',             'Hi %s, this world can only be played durin
 tz_def('RND_WAIT_NEXT',              'The next window opens on');
 tz_def('RND_WAIT_IN',                'in');
 tz_def('RND_WAIT_WORLD_RUNS',        'The world does not stop while you are away: troops keep marching, buildings and training finish and your villages keep producing. Attacks can land at any time, so plan your defence before the window closes.');
+tz_def('RND_WAIT_MEANWHILE',         'Meanwhile you can');
+tz_def('RND_WAIT_REPORTS',           'Read your reports');
+tz_def('RND_WAIT_MESSAGES',          'Read your messages');
+tz_def('RND_WAIT_ALLY_CHAT',         'Chat with your alliance');
+tz_def('RND_WAIT_GLOBAL_CHAT',       'Chat with everyone: the &#128172; button at the bottom right');
+tz_def('RND_WAIT_NEW',               '%d new');
+tz_def('RND_WAIT_READ_ONLY',         'Reports and messages are read-only until the window opens: sending messages, troops and building orders only work during the play window.');
+tz_def('RND_WAIT_TITLE_PRESTART',    'The round has not started yet');
+tz_def('RND_WAIT_INTRO_PRESTART',    'Hi %1$s, you are registered. The round starts on %2$s - until then the game is closed.');
 tz_def('RND_WAIT_OPEN_NOW',          'The window is open now!');
 tz_def('RND_WAIT_ENTER',             'Enter the game');
 // results page (results.php)

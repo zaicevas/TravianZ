@@ -129,14 +129,23 @@ $sizeNames = [1 => 'small', 2 => 'great', 3 => 'unique'];
         </div>
 
         <div class="rs-card">
-            <h3>Round length</h3>
+            <h3>Round start and length</h3>
             <div class="rs-row">
+                <div>
+                    <label>Round start date</label>
+                    <input type="date" name="start_date" id="rs_start_date" value="<?php echo e(date('Y-m-d', $start)); ?>"<?php echo $now >= $start ? ' disabled' : ''; ?>>
+                </div>
+                <div>
+                    <label>Round start time</label>
+                    <input class="short" type="time" name="start_time" id="rs_start_time" value="<?php echo e(date('H:i', $start)); ?>"<?php echo $now >= $start ? ' disabled' : ''; ?>>
+                </div>
                 <div>
                     <label>Round length (days)</label>
                     <input class="short" type="text" name="round_days" maxlength="3" value="<?php echo e($rs['round_days']); ?>">
                 </div>
             </div>
-            <div class="rs-hint">Round start (config.php START_DATE / START_TIME): <b><?php echo date($fmt, $start); ?></b>.
+            <div class="rs-hint">Round start (stored in config.php START_DATE / START_TIME): <b id="rs_start"><?php echo date($fmt, $start); ?></b>.
+                <?php echo $now >= $start ? 'The round has started, so the start can no longer be changed.' : 'It can be moved (to a later or earlier time in the future) until the round starts; the artifact date, weekly gold dates and the end move with it.'; ?>
                 Round end = start + length: <b id="rs_end"><?php echo date($fmt, $end); ?></b>
                 <?php echo $over ? '<span style="color:#f87171;">(ended)</span>' : ''; ?>.
                 The length can be changed (e.g. to extend the round) as long as the end has not passed.</div>

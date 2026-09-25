@@ -83,6 +83,29 @@ class RoundControl
         'karte2.php', 'spieler.php',
     ];
 
+    /**
+     * In-game pages players may read (GET only) while the play window is
+     * closed: reports and the message inbox. Sending, deleting etc. are POSTs
+     * and stay window-only.
+     */
+    const WINDOW_CLOSED_VIEW_PAGES = ['berichte.php', 'nachrichten.php'];
+
+    /**
+     * allianz.php outside the window: only the alliance chat (s=6) and its
+     * sajax calls. Any other parameter (a=3 accepts an invite, o=4 deletes
+     * one, ...) makes the request a normal, blocked one.
+     */
+    const WINDOW_CLOSED_ALLY_CHAT_KEYS = ['s', 'rs', 'rsargs', 'rsrnd'];
+    const WINDOW_CLOSED_ALLY_CHAT_CALLS = ['get_data', 'add_data'];
+
+    /** ajax.php actions allowed while the play window is closed: the global chat. */
+    const WINDOW_CLOSED_AJAX_OK = [
+        'gchat_poll', 'gchat_updates', 'gchat_send', 'gchat_edit',
+        'gchat_delete', 'gchat_poll_create', 'gchat_poll_vote',
+        'gchat_search_users', 'gchat_share_report', 'gchat_mute',
+        'gchat_block', 'gchat_unmute',
+    ];
+
     /** GET parameters that trigger game actions (Building::procBuild()). */
     const ACTION_PARAMS = ['a', 'master', 'buildingFinish'];
 
@@ -343,6 +366,54 @@ class RoundControl
         return $ts ? (int) $ts : 0;
     }
 
+    /**
+     * Parse an admin start date + time ("2026-09-27", "18:30") in the server
+     * timezone. Returns the timestamp, or null when it is not a real date/time.
+     */
+    public static function parseStart($date, $time)
+    {
+        $dt = DateTime::createFromFormat('!Y-m-d H:i', trim((string) $date) . ' ' . trim((string) $time),
+            new DateTimeZone(date_default_timezone_get()));
+        if (!$dt || $dt->format('Y-m-d H:i') !== trim((string) $date) . ' ' . trim((string) $time)) {
+            return null;
+        }
+        return $dt->getTimestamp();
+    }
+
+    /**
+     * Store a new round start in config.php (START_DATE "d.m.Y", START_TIME
+     * "H:i"). Written to a temporary file and renamed, so the game never reads
+     * a half-written config. Returns true on success.
+     */
+    public static function writeStart($ts, $file = null)
+    {
+        $file = $file ?: __DIR__ . '/config.php';
+        $text = @file_get_contents($file);
+        if ($text === false) {
+            return false;
+        }
+        $n1 = $n2 = 0;
+        $text = preg_replace('/define\(\s*"START_DATE"\s*,\s*"[^"]*"\s*\)/', 'define("START_DATE", "' . date('d.m.Y', $ts) . '")', $text, -1, $n1);
+        $text = preg_replace('/define\(\s*"START_TIME"\s*,\s*"[^"]*"\s*\)/', 'define("START_TIME", "' . date('H:i', $ts) . '")', $text, -1, $n2);
+        if ($text === null || $n1 !== 1 || $n2 !== 1) {
+            return false;
+        }
+        $tmp = $file . '.tmp-' . getmypid();
+        if (@file_put_contents($tmp, $text, LOCK_EX) !== strlen($text)) {
+            @unlink($tmp);
+            return false;
+        }
+        @chmod($tmp, fileperms($file) & 0777);
+        if (!@rename($tmp, $file)) {
+            @unlink($tmp);
+            return false;
+        }
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($file, true);
+        }
+        return true;
+    }
+
     /** $ts + $days calendar days, keeping the wall-clock time across DST. */
     public static function addDays($ts, $days)
     {
@@ -421,6 +492,37 @@ class RoundControl
     }
 
     /** Is the daily play window open at $now? (always true when disabled) */
+    /** Has the round started? (Unknown start = treated as started, never locks the game.) */
+    public static function hasStarted($now = null)
+    {
+        $start = self::roundStart();
+        return !$start || ($now === null ? time() : (int) $now) >= $start;
+    }
+
+    /**
+     * May players play right now: the round has started and the play window
+     * is open. Before the start the game is closed even inside the window
+     * (the stock login page only hides the form; logging in still works).
+     */
+    public static function isPlayable($now = null)
+    {
+        return self::hasStarted($now) && self::isWindowOpen($now);
+    }
+
+    /** When players can play next (now while playable), for the waiting page and ajax. */
+    public static function nextPlayStart($now = null)
+    {
+        $now = $now === null ? time() : (int) $now;
+        if (self::isPlayable($now)) {
+            return $now;
+        }
+        $c = self::countdownTarget($now);
+        if ($c && in_array($c['mode'], ['first', 'next', 'start'], true)) {
+            return $c['at'];
+        }
+        return self::nextWindowStart($now);
+    }
+
     public static function isWindowOpen($now = null)
     {
         if (!self::windowEnabled()) {
@@ -544,8 +646,8 @@ class RoundControl
         }
         $body = ['ok' => 0, 'reason' => $reason];
         if ($reason === 'play_window_closed') {
-            $body['message'] = 'The play window is closed. It opens again at ' . self::fmt(self::nextWindowStart()) . ' (server time).';
-            $body['next'] = self::nextWindowStart();
+            $body['message'] = 'The play window is closed. It opens again at ' . self::fmt(self::nextPlayStart()) . ' (server time).';
+            $body['next'] = self::nextPlayStart();
         } else {
             $body['message'] = 'The round has ended.';
         }
@@ -591,9 +693,40 @@ class RoundControl
             self::deny('round_over', $prefix . 'results.php');
         }
 
-        if (!self::isWindowOpen()) {
+        if (!self::isPlayable() && !self::closedWindowAllows($page)) {
             self::deny('play_window_closed', $prefix . 'playwindow.php');
         }
+    }
+
+    /**
+     * May this request go through while the window is closed? Reports and
+     * messages (read only) and the alliance chat. $page from currentPage().
+     */
+    public static function closedWindowAllows($page)
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+            return false;
+        }
+        foreach (self::ACTION_PARAMS as $param) {
+            if (isset($_GET[$param])) {
+                return false;
+            }
+        }
+        if (in_array($page, self::WINDOW_CLOSED_VIEW_PAGES, true)) {
+            return true;
+        }
+        if ($page === 'allianz.php') {
+            if ((string) ($_GET['s'] ?? '') !== '6') {
+                return false;
+            }
+            foreach (array_keys($_GET) as $key) {
+                if (!in_array((string) $key, self::WINDOW_CLOSED_ALLY_CHAT_KEYS, true)) {
+                    return false;
+                }
+            }
+            return !isset($_GET['rs']) || in_array($_GET['rs'], self::WINDOW_CLOSED_ALLY_CHAT_CALLS, true);
+        }
+        return false;
     }
 
     /** Same rules for ajax.php, which does not bootstrap Session.php. */
@@ -605,7 +738,7 @@ class RoundControl
         }
 
         $over   = self::isRoundOver();
-        $closed = !self::isWindowOpen();
+        $closed = !self::isPlayable();
         if (!$over && !$closed) {
             return;
         }
@@ -620,6 +753,9 @@ class RoundControl
             }
             $reason = 'round_over';
         } elseif ($closed) {
+            if (in_array($action, self::WINDOW_CLOSED_AJAX_OK, true)) {
+                return;
+            }
             $reason = 'play_window_closed';
         } else {
             return;

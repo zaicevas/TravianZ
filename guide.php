@@ -37,6 +37,7 @@ $ended      = RoundControl::isRoundOver($now);
 $window     = RoundControl::windowEnabled();
 $windowOpen = RoundControl::isWindowOpen($now);
 $nextOpen   = RoundControl::nextWindowStart($now);
+$cd         = RoundControl::countdownTarget($now);
 $nextClose  = RoundControl::nextWindowEnd($now);
 $weekly     = (int) RoundControl::get('weekly_gold');
 $startGold  = (defined('NEW_FUNCTION_REGISTRATION_GOLD') && NEW_FUNCTION_REGISTRATION_GOLD) ? (int) NEW_FUNCTION_REGISTRATION_GOLD_VALUE : 0;
@@ -72,15 +73,21 @@ time (<?php echo $tz; ?>).</p>
 Outside of it the game pages are closed for players (you will see a waiting page), but <b>the world keeps running</b>:
 troops march and fight, buildings and training finish and your villages keep producing resources.</p>
 <div class="rnd-box rnd-center" id="rnd_window_box">
-<?php     if ($ended) { ?>
+<?php     if ($ended || !$cd) { ?>
 	<p class="rnd-big">The round is over - see the <a href="results.php">results</a>.</p>
-<?php     } elseif ($windowOpen) { ?>
+<?php     } elseif ($cd['mode'] === 'closes') { ?>
 	<p class="rnd-big">The play window is open now!</p>
-	<p>It closes at <b><?php echo date('H:i', $nextClose); ?></b>, in</p>
-	<p class="rnd-count"><span class="rnd-countdown" data-left="<?php echo (int) ($nextClose - $now); ?>" data-done-url="guide.php#window"></span></p>
+	<p>It closes at <b><?php echo date('H:i', $cd['at']); ?></b>, in</p>
+	<p class="rnd-count"><span class="rnd-countdown" data-left="<?php echo (int) ($cd['at'] - $now); ?>" data-done-url="guide.php#window"></span></p>
+<?php     } elseif ($cd['mode'] === 'end') { ?>
+	<p>There is no play window left before the round end on <b><?php echo date($fmt, $cd['at']); ?></b>, in</p>
+	<p class="rnd-count"><span class="rnd-countdown" data-left="<?php echo (int) ($cd['at'] - $now); ?>" data-done-url="guide.php#window"></span></p>
 <?php     } else { ?>
-	<p>The next play window opens on <b id="rnd_next_open"><?php echo date($fmt, $nextOpen); ?></b>, in</p>
-	<p class="rnd-count"><span class="rnd-countdown" data-left="<?php echo (int) ($nextOpen - $now); ?>" data-done-url="guide.php#window"></span></p>
+<?php         if ($cd['mode'] === 'first') { ?>
+	<p id="rnd_guide_prestart">The round has not started yet: it starts on <b><?php echo date($fmt, $start); ?></b>.</p>
+<?php         } ?>
+	<p><?php echo $cd['mode'] === 'first' ? 'The first play window opens on' : 'The next play window opens on'; ?> <b id="rnd_next_open"><?php echo date($fmt, $cd['at']); ?></b>, in</p>
+	<p class="rnd-count"><span class="rnd-countdown" data-left="<?php echo (int) ($cd['at'] - $now); ?>" data-done-url="guide.php#window"></span></p>
 <?php     } ?>
 </div>
 <?php } else { ?>
