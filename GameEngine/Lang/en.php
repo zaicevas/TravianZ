@@ -4522,7 +4522,7 @@ tz_def('RND_WAIT_MEANWHILE',         'Meanwhile you can');
 tz_def('RND_WAIT_REPORTS',           'Read your reports');
 tz_def('RND_WAIT_MESSAGES',          'Read your messages');
 tz_def('RND_WAIT_ALLY_CHAT',         'Chat with your alliance');
-tz_def('RND_WAIT_GLOBAL_CHAT',       'Chat with everyone: the &#128172; button at the bottom right');
+tz_def('RND_WAIT_GLOBAL_CHAT',       'Chat with everyone in the global chat below');
 tz_def('RND_WAIT_NEW',               '%d new');
 tz_def('RND_WAIT_READ_ONLY',         'Reports and messages are read-only until the window opens: sending messages, troops and building orders only work during the play window.');
 tz_def('RND_WAIT_TITLE_PRESTART',    'The round has not started yet');
@@ -4564,5 +4564,6 @@ tz_def('RND_RES_FULL',               'Full');
 tz_def('RND_RES_FULL_IN',            'full in');
 tz_def('RND_RES_EMPTY',              'Empty');
 tz_def('RND_RES_EMPTY_IN',           'empty in');
+tz_def('RND_WINDOW_CLOSES_IN',       'Window closes in');
 // admin panel
 tz_def('ADMIN_ROUND_SETTINGS',       'Round settings');

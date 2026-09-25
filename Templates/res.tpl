@@ -151,4 +151,31 @@ div#res tr.resTimers .neg { color: #c00; }
 </div>
 </div>
 
+<?php
+    // Play window: low-key "closes in" countdown left of "Calculated in"; reloads at 0
+    // so the player lands on the waiting page.
+    $rndCd = RoundControl::isWindowOpen() ? RoundControl::countdownTarget() : null;
+    if ($rndCd && $rndCd['mode'] === 'closes') {
+?>
+<div id="rnd_window_cd" data-left="<?php echo $rndCd['at'] - time(); ?>"><?php echo RND_WINDOW_CLOSES_IN; ?><br /><span></span></div>
+<style>
+#rnd_window_cd { position: absolute; right: 100%; top: 0; margin-right: 24px; text-align: right; white-space: nowrap; color: #999; font-size: 11px; }
+#rnd_window_cd span { font-weight: bold; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var box = document.getElementById('rnd_window_cd'), wrap = document.getElementById('ltimeWrap');
+    if (!wrap) { box.parentNode.removeChild(box); return; }
+    wrap.appendChild(box);
+    var end = Date.now() + box.getAttribute('data-left') * 1000, out = box.querySelector('span');
+    (function tick() {
+        var s = Math.max(0, Math.round((end - Date.now()) / 1000));
+        var m = Math.floor(s / 60) % 60, x = s % 60;
+        out.textContent = Math.floor(s / 3600) + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x;
+        if (s === 0) { setTimeout(function () { location.reload(); }, 2000); } else { setTimeout(tick, 1000); }
+    })();
+});
+</script>
+<?php } ?>
+
 <?php } ?>

@@ -24,7 +24,7 @@
 ##  Copyright:     TravianZ (c) 2010-2026. All rights reserved.                ##
 #################################################################################
 ?>
-<div id="gchat_root" data-uid="<?php echo (int) $session->uid; ?>" data-username="<?php echo htmlspecialchars($session->username, ENT_QUOTES, 'UTF-8'); ?>">
+<div id="gchat_root"<?php echo !empty($gchatInline) ? ' class="gchat_inline"' : ''; ?> data-uid="<?php echo (int) $session->uid; ?>" data-username="<?php echo htmlspecialchars($session->username, ENT_QUOTES, 'UTF-8'); ?>">
     <button id="gchat_bubble" type="button" title="<?php echo GCHAT_TITLE; ?>">
         💬<span id="gchat_badge" style="display:none">0</span>
     </button>
@@ -63,6 +63,10 @@
 
 <style>
     #gchat_root, #gchat_root * { box-sizing: border-box; }
+
+    /* Inline mode ($gchatInline, waiting page): always-open panel in the page flow */
+    #gchat_root.gchat_inline #gchat_bubble, #gchat_root.gchat_inline #gchat_close { display: none !important; }
+    #gchat_root.gchat_inline #gchat_panel { position: static; width: 100%; max-width: none; height: 420px; max-height: none; box-shadow: none; margin: 12px 0; }
 
     #gchat_bubble {
         position: fixed;
@@ -1214,6 +1218,7 @@
 
     loadInitial();
     pollTimer = window.setInterval(poll, 2500);
+    if (root.className.indexOf('gchat_inline') !== -1) { openPanel(); }
 
     window.addEventListener('beforeunload', function () {
         if (pollTimer) { window.clearInterval(pollTimer); }

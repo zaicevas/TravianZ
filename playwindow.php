@@ -56,6 +56,12 @@ include("Templates/Round/outgame_top.tpl");
 <p><?php echo RND_WAIT_WORLD_RUNS; ?></p>
 
 <?php
+// global chat, embedded in the page (the in-game pages have the floating button)
+$gchatInline = true;
+include("Templates/GlobalChat/widget.tpl");
+?>
+
+<?php
 $wpReports  = (int) $database->getUnreadNoticesCount($session->uid);
 $wpMessages = (int) $database->getUnreadMessagesCount($session->uid);
 $wpNew      = function ($n) { return $n > 0 ? ' <span class="rnd-new">(' . sprintf(RND_WAIT_NEW, $n) . ')</span>' : ''; };
@@ -75,7 +81,5 @@ $wpNew      = function ($n) { return $n > 0 ? ' <span class="rnd-new">(' . sprin
 
 <p class="rnd-center"><a href="guide.php"><?php echo RND_INFO_READ_GUIDE; ?></a> &nbsp;|&nbsp; <a href="logout.php"><?php echo LOGOUT; ?></a></p>
 <?php
-// global chat (floating button), the same widget as on the in-game pages
-include("Templates/GlobalChat/widget.tpl");
 include("Templates/Round/outgame_bottom.tpl");
 ?>
