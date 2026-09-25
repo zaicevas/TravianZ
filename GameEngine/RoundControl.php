@@ -268,6 +268,50 @@ class RoundControl
         return date(self::DATE_FMT, (int) $ts);
     }
 
+    /**
+     * What the homepage counts down to, or null when there is nothing left:
+     * ['mode' => first|next|closes|start|end, 'at' => timestamp].
+     *   first  - before the round start: the first play window
+     *   next   - round running, window closed: the next opening
+     *   closes - round running, window open: when it closes
+     *   start  - no play window, before the start: the round start
+     *   end    - the next opening would be at/after the round end
+     */
+    public static function countdownTarget($now = null)
+    {
+        $now   = $now === null ? time() : (int) $now;
+        $start = self::roundStart();
+        $end   = self::roundEnd();
+        if (!$start || self::isRoundOver($now)) {
+            return null;
+        }
+        if (!self::windowEnabled()) {
+            return $now < $start ? ['mode' => 'start', 'at' => $start] : null;
+        }
+        if ($now < $start) {
+            $at   = self::isWindowOpen($start) ? $start : self::nextWindowStart($start);
+            $mode = 'first';
+        } elseif (self::isWindowOpen($now)) {
+            $at   = self::nextWindowEnd($now);
+            $mode = 'closes';
+        } else {
+            $at   = self::nextWindowStart($now);
+            $mode = 'next';
+        }
+        if ($at >= $end) {
+            return ['mode' => 'end', 'at' => $end];
+        }
+        return ['mode' => $mode, 'at' => $at];
+    }
+
+    /** Countdown text as the page script shows it: "2d 04:05:06" / "04:05:06". */
+    public static function countdownText($seconds)
+    {
+        $s = max(0, (int) $seconds);
+        $d = intdiv($s, 86400);
+        return ($d > 0 ? $d . 'd ' : '') . sprintf('%02d:%02d:%02d', intdiv($s % 86400, 3600), intdiv($s % 3600, 60), $s % 60);
+    }
+
     /** "3 days 4 hours", "5 hours 20 minutes" or "12 minutes" (rounded down). */
     public static function durationText($seconds)
     {

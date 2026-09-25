@@ -96,6 +96,11 @@ AccessLogger::logRequest();
 		#rnd_key_dates .kd-big {color:#9c0f19; font-size:19px; font-weight:bold; line-height:26px; white-space:nowrap;}
 		#rnd_key_dates .kd-sub {color:#555; font-size:11px; line-height:14px; min-height:14px;}
 		#rnd_key_dates .kd-open {background:#71d000; border-radius:3px; color:#fff; font-weight:bold; padding:0 4px;}
+		#rnd_key_dates .kd-countdown {background:#9c0f19; border-radius:5px; color:#fff; font-size:12px; margin-top:8px; padding:6px 10px; text-align:center;}
+		#rnd_key_dates .kd-cd-closes {background:#4e9a06;}
+		#rnd_key_dates .kd-cd-time {display:inline-block; font-size:17px; font-weight:bold; letter-spacing:.5px; margin:0 4px; min-width:9em;}
+		#rnd_key_dates .kd-cd-at {color:#f3d6d8; font-size:11px;}
+		#rnd_key_dates .kd-cd-closes .kd-cd-at {color:#e0f2cf;}
 		#rnd_key_dates .kd-more {border-spacing:0; border-top:1px solid #ecd9a0; margin-top:7px; padding-top:5px; width:100%;}
 		#rnd_key_dates .kd-more th {color:#555; font-size:11px; font-weight:normal; text-align:left; width:48%;}
 		#rnd_key_dates .kd-more td {color:#333; font-size:11px; font-weight:bold;}
@@ -276,6 +281,8 @@ AccessLogger::logRequest();
 						$kdSub   = htmlspecialchars(sprintf(RND_KEY_IN, RoundControl::durationText($kdStart - $kdNow)), ENT_QUOTES, 'UTF-8');
 					}
 					$kdWindow = RoundControl::windowEnabled();
+					$kdCd     = RoundControl::countdownTarget($kdNow);
+					$kdCdText = ['first' => RND_CD_FIRST, 'next' => RND_CD_NEXT, 'closes' => RND_CD_CLOSES, 'start' => RND_CD_START, 'end' => RND_CD_END];
 					?>
 					<div id="rnd_key_dates">
 						<div class="kd-block">
@@ -288,6 +295,33 @@ AccessLogger::logRequest();
 							<div class="kd-big" id="rnd_key_window"><?php echo htmlspecialchars($kdWindow ? str_replace(' - ', ' &ndash; ', RoundControl::windowLabel()) : RND_INFO_ALWAYS_OPEN, ENT_QUOTES, 'UTF-8', false); ?></div>
 							<div class="kd-sub"><?php if ($kdWindow) { echo htmlspecialchars(sprintf(RND_KEY_WINDOW_DAILY, date_default_timezone_get()), ENT_QUOTES, 'UTF-8'); if ($kdStarted && !$kdEnded && RoundControl::isWindowOpen($kdNow)) { ?> <span class="kd-open" id="rnd_key_window_open"><?php echo RND_KEY_WINDOW_OPEN; ?></span><?php } } ?></div>
 						</div>
+<?php if ($kdCd) { ?>
+						<div class="kd-countdown kd-cd-<?php echo $kdCd['mode']; ?>" id="rnd_key_countdown_box">
+							<span class="kd-cd-label"><?php echo $kdCdText[$kdCd['mode']]; ?></span>
+							<span class="kd-cd-time" id="rnd_key_countdown" data-left="<?php echo (int) ($kdCd['at'] - $kdNow); ?>"><?php echo RoundControl::countdownText($kdCd['at'] - $kdNow); ?></span>
+							<span class="kd-cd-at" id="rnd_key_countdown_at">(<?php echo RoundControl::fmt($kdCd['at']); ?>)</span>
+						</div>
+						<script type="text/javascript">
+						(function () {
+							var node = document.getElementById('rnd_key_countdown');
+							if (!node) { return; }
+							var loaded = Date.now(), total = parseInt(node.getAttribute('data-left'), 10), fired = false;
+							function pad(n) { return n < 10 ? '0' + n : '' + n; }
+							function tick() {
+								var left = total - Math.floor((Date.now() - loaded) / 1000);
+								if (left <= 0) {
+									node.innerHTML = '00:00:00';
+									if (!fired) { fired = true; setTimeout(function () { window.location.reload(); }, 1500); }
+									return;
+								}
+								var d = Math.floor(left / 86400), h = Math.floor(left % 86400 / 3600), m = Math.floor(left % 3600 / 60), s = left % 60;
+								node.innerHTML = (d > 0 ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+							}
+							tick();
+							setInterval(tick, 1000);
+						})();
+						</script>
+<?php } ?>
 						<table class="kd-more">
 							<tr><th><?php echo RND_INFO_ARTIFACTS; ?>:</th><td id="rnd_key_artifacts"><?php echo RoundControl::fmt(RoundControl::artifactsDate()); ?></td></tr>
 							<tr><th><?php echo RND_INFO_ROUND_END; ?>:</th><td id="rnd_key_end"><?php echo RoundControl::fmt($kdEnd); ?></td></tr>

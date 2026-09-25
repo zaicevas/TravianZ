@@ -4507,6 +4507,11 @@ tz_def('RND_KEY_RUNNING',            'in progress - ends in %s');
 tz_def('RND_KEY_WINDOW',             'Play window');
 tz_def('RND_KEY_WINDOW_DAILY',       'every day, server time (%s)');
 tz_def('RND_KEY_WINDOW_OPEN',        'open now');
+tz_def('RND_CD_FIRST',               'First play window opens in');
+tz_def('RND_CD_NEXT',                'Next play window opens in');
+tz_def('RND_CD_CLOSES',              'Play window closes in');
+tz_def('RND_CD_START',               'Round starts in');
+tz_def('RND_CD_END',                 'Round ends in');
 // waiting page (playwindow.php)
 tz_def('RND_WAIT_TITLE',             'The play window is closed');
 tz_def('RND_WAIT_INTRO',             'Hi %s, this world can only be played during the daily play window:');
