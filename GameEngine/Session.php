@@ -214,7 +214,13 @@ function __construct() {
     }
 
     $this->referrer = $_SESSION['url'] ?? "/";
-    $this->url = $_SESSION['url'] = $_SERVER['PHP_SELF'];
+    // Background requests (chat/quest polling, Automation.php) are not pages to
+    // return to: recording them sent the gold "finish now" redirect to ajax.php.
+    if (preg_match('#(^|/)(ajax\.php|GameEngine/)#', $_SERVER['PHP_SELF'])) {
+        $this->url = $this->referrer;
+    } else {
+        $this->url = $_SESSION['url'] = $_SERVER['PHP_SELF'];
+    }
 
     $this->SurfControl();
 }
