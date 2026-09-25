@@ -4560,5 +4560,9 @@ tz_def('RND_RESULTS_POP',            'Population');
 tz_def('RND_RESULTS_VILLAGES',       'Villages');
 tz_def('RND_RESULTS_SNAPSHOT',       'Snapshot taken on %s.');
 tz_def('RND_RESULTS_VIEW_ONLY',      'The game world stays open for viewing:');
+tz_def('RND_RES_FULL',               'Full');
+tz_def('RND_RES_FULL_IN',            'full in');
+tz_def('RND_RES_EMPTY',              'Empty');
+tz_def('RND_RES_EMPTY_IN',           'empty in');
 // admin panel
 tz_def('ADMIN_ROUND_SETTINGS',       'Round settings');

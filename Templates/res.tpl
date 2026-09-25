@@ -110,7 +110,43 @@ if (!empty($village)) {
             </td>
 
         </tr>
+        <tr class="resTimers">
+            <?php
+            // Seconds until each store is full (or, when production is negative, empty).
+            $resTimers = [[$wood, $woodStore, $maxStore], [$clay, $clayStore, $maxStore],
+                          [$iron, $ironStore, $maxStore], [$crop, $cropStore, $maxCrop]];
+            foreach ($resTimers as [$prod, $stock, $cap]) {
+                echo '<td></td><td>';
+                if ($prod > 0) {
+                    echo $stock >= $cap ? RND_RES_FULL
+                        : RND_RES_FULL_IN . ' <span data-left="' . (int) ceil(($cap - $stock) / $prod * 3600) . '"></span>';
+                } elseif ($prod < 0) {
+                    echo '<span class="neg">' . ($stock <= 0 ? RND_RES_EMPTY
+                        : RND_RES_EMPTY_IN . ' <span data-left="' . (int) ceil($stock / -$prod * 3600) . '"></span>') . '</span>';
+                }
+                echo '</td>';
+            }
+            ?>
+            <td></td><td></td>
+        </tr>
     </table>
+<style>
+div#res tr.resTimers td { font-size: 10px; color: #777; padding-top: 0; white-space: nowrap; }
+div#res tr.resTimers .neg { color: #c00; }
+</style>
+<script>
+(function () {
+    var els = document.querySelectorAll('#res tr.resTimers span[data-left]'), t0 = Date.now();
+    function tick() {
+        for (var i = 0; i < els.length; i++) {
+            var s = Math.max(0, els[i].getAttribute('data-left') - Math.floor((Date.now() - t0) / 1000));
+            var h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+            els[i].textContent = h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x;
+        }
+    }
+    tick(); setInterval(tick, 1000);
+})();
+</script>
 
 </div>
 </div>
