@@ -358,10 +358,10 @@ AccessLogger::logRequest();
 						<p class="rp-none"><?php echo RND_PLAYERS_NONE; ?></p>
 <?php } else { ?>
 						<table id="rnd_players_table">
-							<thead><tr><th><?php echo RND_PLAYERS_PLAYER; ?></th><th><?php echo RND_PLAYERS_INVITED; ?></th><?php if ($rpShowQuadrant) { ?><th><?php echo RND_PLAYERS_QUADRANT; ?></th><?php } ?></tr></thead>
+							<thead><tr><th><?php echo RND_PLAYERS_PLAYER; ?></th><th><?php echo RND_PLAYERS_POP; ?></th><?php if ($rpShowQuadrant) { ?><th><?php echo RND_PLAYERS_QUADRANT; ?></th><?php } ?></tr></thead>
 							<tbody>
 <?php     foreach ($rpList as $rp) { ?>
-								<tr><td class="rp-name"><?php echo $rpH($rp['username']); ?> (<?php echo $rpH(defined('TRIBE' . $rp['tribe']) ? constant('TRIBE' . $rp['tribe']) : '?'); ?>)</td><td class="rp-num"><?php echo (int) $rp['invited']; ?></td><?php if ($rpShowQuadrant) { ?><td class="rp-num"><?php echo $rp['quadrant'] ? trim(RoundControl::QUADRANTS[$rp['quadrant']], '()') : '-'; ?></td><?php } ?></tr>
+								<tr><td class="rp-name"><?php echo $rpH($rp['username']); ?> (<?php echo $rpH(defined('TRIBE' . $rp['tribe']) ? constant('TRIBE' . $rp['tribe']) : '?'); ?>)</td><td class="rp-num"><?php echo (int) $rp['pop']; ?></td><?php if ($rpShowQuadrant) { ?><td class="rp-num"><?php echo $rp['quadrant'] ? trim(RoundControl::QUADRANTS[$rp['quadrant']], '()') : '-'; ?></td><?php } ?></tr>
 <?php     } ?>
 							</tbody>
 <?php     if ($rpShowQuadrant) { ?>

@@ -1165,8 +1165,8 @@ class RoundControl
     }
 
     /**
-     * Players for the homepage list, by name: username, tribe, how many
-     * accounts they invited, quadrant of their capital (0 = none/centre).
+     * Players for the homepage list, most populous first (then by name): username,
+     * tribe, total population, quadrant of their capital (0 = none/centre).
      * Same accounts as the population ranking: no system, staff or banned.
      */
     public static function registeredPlayers()
@@ -1177,7 +1177,7 @@ class RoundControl
         }
         $maxAccess = (defined('INCLUDE_ADMIN') && INCLUDE_ADMIN) ? 10 : self::STAFF_ACCESS;
         $q = "SELECT u.username, u.tribe, w.x, w.y,
-                (SELECT COUNT(*) FROM `" . TB_PREFIX . "users` i WHERE i.invited IN (u.id, -u.id)) AS invited
+                (SELECT COALESCE(SUM(p.pop), 0) FROM `" . TB_PREFIX . "vdata` p WHERE p.owner = u.id) AS pop
             FROM `" . TB_PREFIX . "users` u
             LEFT JOIN `" . TB_PREFIX . "vdata` v ON v.owner = u.id AND v.capital = 1
             LEFT JOIN `" . TB_PREFIX . "wdata` w ON w.id = v.wref
@@ -1189,7 +1189,7 @@ class RoundControl
                 $out[] = [
                     'username' => (string) $row['username'],
                     'tribe'    => (int) $row['tribe'],
-                    'invited'  => (int) $row['invited'],
+                    'pop'      => (int) $row['pop'],
                     'quadrant' => $row['x'] === null ? 0 : self::quadrantOf($row['x'], $row['y']),
                 ];
             }
@@ -1197,7 +1197,8 @@ class RoundControl
             return [];
         }
         usort($out, function ($a, $b) {
-            return strcasecmp($a['username'], $b['username']) ?: strcmp($a['username'], $b['username']);
+            return ($b['pop'] <=> $a['pop'])
+                ?: strcasecmp($a['username'], $b['username']) ?: strcmp($a['username'], $b['username']);
         });
         return $out;
     }

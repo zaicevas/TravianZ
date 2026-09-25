@@ -31,6 +31,12 @@ if (RoundControl::isPlayable() || RoundControl::isStaff($session->access, $sessi
 	exit;
 }
 
+// Once the round runs, the reports page (with the global chat) is the waiting page.
+if (RoundControl::hasStarted()) {
+	header("Location: berichte.php");
+	exit;
+}
+
 $now         = time();
 $nextOpen    = RoundControl::nextPlayStart($now);
 $preStart    = !RoundControl::hasStarted($now);

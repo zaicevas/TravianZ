@@ -23,6 +23,9 @@
 ##  License:       TravianZ Project                                            ##
 ##  Copyright:     TravianZ (c) 2010-2026. All rights reserved.                ##
 #################################################################################
+// Once per page: an inline chat (waiting/reports page) replaces the footer's floating one.
+if (!empty($GLOBALS['gchatIncluded'])) { return; }
+$GLOBALS['gchatIncluded'] = true;
 ?>
 <div id="gchat_root"<?php echo !empty($gchatInline) ? ' class="gchat_inline"' : ''; ?> data-uid="<?php echo (int) $session->uid; ?>" data-username="<?php echo htmlspecialchars($session->username, ENT_QUOTES, 'UTF-8'); ?>">
     <button id="gchat_bubble" type="button" title="<?php echo GCHAT_TITLE; ?>">
@@ -32,6 +35,7 @@
     <div id="gchat_panel" style="display:none">
         <div id="gchat_head">
             <span><?php echo GCHAT_TITLE; ?></span>
+            <?php if (!empty($gchatHeadRight)) { echo '<span class="gchat_head_right">' . $gchatHeadRight . '</span>'; } ?>
             <button id="gchat_close" type="button" title="&times;">&times;</button>
         </div>
 
@@ -66,6 +70,8 @@
 
     /* Inline mode ($gchatInline, waiting page): always-open panel in the page flow */
     #gchat_root.gchat_inline #gchat_bubble, #gchat_root.gchat_inline #gchat_close { display: none !important; }
+    #gchat_root.gchat_inline #gchat_head { padding: 8px 10px; font-size: 13px; }
+    #gchat_root.gchat_inline .gchat_head_right { font-weight: normal; }
     #gchat_root.gchat_inline #gchat_panel { position: static; width: 100%; max-width: none; height: 420px; max-height: none; box-shadow: none; margin: 12px 0; }
 
     #gchat_bubble {

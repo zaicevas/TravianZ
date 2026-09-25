@@ -84,7 +84,12 @@ if(isset($_GET['newdid'])) {
 <div id="mid">
 <?php include("Templates/menu.tpl"); ?>
 		<div id="content"  class="reports">
+<?php
+if (!isset($_GET['id']) && !RoundControl::isPlayable() && !RoundControl::isStaff($session->access, $session->username)) {
+    include("Templates/Round/closed_header.tpl");
+} else { ?>
 <h1><?php echo REPORTS; ?></h1>
+<?php } ?>
 <div id="textmenu">
    <a href="berichte.php" <?php if (!isset($_GET['t'])) { echo "class=\"selected \""; } ?>><?php echo ALL; ?></a>
  | <a href="berichte.php?t=2" <?php if (isset($_GET['t']) && $_GET['t'] == 2) { echo "class=\"selected \""; } ?>><?php echo TZ_TRADE; ?></a>
