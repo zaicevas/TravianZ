@@ -73,6 +73,8 @@ $GLOBALS['gchatIncluded'] = true;
     #gchat_root.gchat_inline #gchat_head { padding: 8px 10px; font-size: 13px; }
     #gchat_root.gchat_inline .gchat_head_right { font-weight: normal; }
     #gchat_root.gchat_inline #gchat_panel { position: static; width: 100%; max-width: none; height: 420px; max-height: none; box-shadow: none; margin: 12px 0; }
+    #gchat_root.gchat_side { clear: both; padding-top: 10px; }
+    #gchat_root.gchat_side #gchat_panel { height: 360px; margin: 0; }
 
     #gchat_bubble {
         position: fixed;
@@ -865,6 +867,8 @@ $GLOBALS['gchatIncluded'] = true;
         if (countUnread === undefined) { countUnread = true; }
         var wasAtBottom = messagesBox.scrollTop + messagesBox.clientHeight >= messagesBox.scrollHeight - 4;
 
+        var empty = rows.length && document.getElementById('gchat_empty');
+        if (empty) { empty.parentNode.removeChild(empty); }
         rows.forEach(function (row) {
             messagesBox.appendChild(renderMessage(row));
             lastId = Math.max(lastId, row.id);
@@ -922,6 +926,7 @@ $GLOBALS['gchatIncluded'] = true;
                 messagesBox.innerHTML = '';
                 if (!data.messages || !data.messages.length) {
                     var empty = document.createElement('div');
+                    empty.id = 'gchat_empty';
                     empty.style.color = '#999';
                     empty.textContent = GCHAT_TXT.empty;
                     messagesBox.appendChild(empty);
@@ -960,7 +965,7 @@ $GLOBALS['gchatIncluded'] = true;
         unread = 0;
         badge.style.display = 'none';
         messagesBox.scrollTop = messagesBox.scrollHeight;
-        input.focus();
+        if (root.className.indexOf('gchat_inline') === -1) { input.focus(); } // inline: don't steal focus / scroll on page load
     }
 
     function closePanel() {
@@ -1221,6 +1226,13 @@ $GLOBALS['gchatIncluded'] = true;
               }
           });
     });
+
+    // In-game pages: open in the right column (under the hero / news) instead of the floating bubble.
+    var sideInfo = document.getElementById('side_info');
+    if (root.className.indexOf('gchat_inline') === -1 && sideInfo) {
+        root.className += ' gchat_inline gchat_side';
+        sideInfo.appendChild(root);
+    }
 
     loadInitial();
     pollTimer = window.setInterval(poll, 2500);
