@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../DarkMode.php'; // pages that load only the language files
+
 /**
  * Load one interface language and fill its gaps from English.
  *

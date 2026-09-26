@@ -54,3 +54,5 @@
 }
 
     spl_autoload_register('autoloadClass');
+    // Dark theme toggle on every HTML page (see GameEngine/DarkMode.php).
+    require_once __DIR__ . '/GameEngine/DarkMode.php';
