@@ -78,7 +78,7 @@ if (isset($_POST['start_date'], $_POST['start_time'])
     $newStart = RoundControl::parseStart($_POST['start_date'], $_POST['start_time']);
     if ($newStart === null) {
         $errors[] = 'The round start must be a valid date and time (HH:MM).';
-    } elseif ($oldStart && $now >= $oldStart) {
+    } elseif (RoundControl::startLocked($now)) {
         $errors[] = 'The round has already started on ' . RoundControl::fmt($oldStart)
             . '; the start can no longer be changed here.';
     } elseif ($newStart <= $now) {

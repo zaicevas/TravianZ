@@ -500,6 +500,19 @@ class RoundControl
     }
 
     /**
+     * The start may no longer be moved: the round has started and players are in it.
+     * Right after a server reset (no player villages) a past start is editable again.
+     */
+    public static function startLocked($now = null)
+    {
+        if (!self::roundStart() || !self::hasStarted($now)) {
+            return false;
+        }
+        $r = mysqli_query(self::link(), "SELECT 1 FROM `" . TB_PREFIX . "vdata` WHERE owner > 5 LIMIT 1");
+        return !$r || mysqli_num_rows($r) > 0;
+    }
+
+    /**
      * May players play right now: the round has started and the play window
      * is open. Before the start the game is closed even inside the window
      * (the stock login page only hides the form; logging in still works).

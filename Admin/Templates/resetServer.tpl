@@ -61,7 +61,7 @@
     <div class="reset-option">
        <label>
         <input type="checkbox" name="keep_admin" value="1" checked>
-Keep Admin accout (<?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?>) after reset
+Keep Admin account (<?php /* the admin panel's account: $_SESSION['username'] is the game login */ echo htmlspecialchars((string) $database->getUserField((int) ($_SESSION['id'] ?? 0), 'username', 0)); ?>) after reset
       </label>
     </div>
 </br></br>

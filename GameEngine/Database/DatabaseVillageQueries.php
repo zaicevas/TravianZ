@@ -211,7 +211,14 @@ trait DatabaseVillageQueries {
             if($resultedRows == 0 && $count >= WORLD_MAX * 2) break;
             
             //Fill the villages array
-            $villages = array_merge($villages, $this->mysqli_fetch_all($result));
+            $picked = $this->mysqli_fetch_all($result);
+            // Claim at once: the artifact rings overlap (small 12.5-18.75, great 8.75-13.75)
+            // and each mode/sector is a separate call, so without this a later call (or a
+            // later loop pass) could pick the same tile and abort the batch on vdata's key.
+            if ($picked) {
+                mysqli_query($this->dblink, "UPDATE " . TB_PREFIX . "wdata SET occupied = 1 WHERE id IN (" . implode(',', array_map('intval', array_column($picked, 'id'))) . ")");
+            }
+            $villages = array_merge($villages, $picked);
             
             $num_rows += $resultedRows;
             $numberOfVillages -= $resultedRows;
