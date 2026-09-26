@@ -150,15 +150,12 @@ trait DatabaseVillageQueries {
         $villages = [];
         $time = time();
         
+        if ($mode == 0) {
+            return $this->generateSpawnBase($sector, $numberOfVillages);
+        }
+
         while ($numberOfVillages > 0) {
             switch($mode){
-                case 0:
-                    $daysPassedFromStart = ($time - strtotime(START_DATE) - strtotime(date('d.m.Y')) + strtotime(START_TIME)) / 86400;
-
-                    $radiusMin = min(round(pow(2 * ($daysPassedFromStart / 5 * SPEED), 2)), round(pow(WORLD_MAX * 0.8, 2)) + round(pow(WORLD_MAX * 0.8, 2)));
-                    $radiusMax = min(round(pow(4 * ($daysPassedFromStart / 5 * SPEED), 2)) + pow($count, 2), pow(WORLD_MAX, 2) + pow(WORLD_MAX, 2));
-                    break;
-                    
                 case 1:
                 default:
                     $radiusMin = 1;
@@ -226,6 +223,79 @@ trait DatabaseVillageQueries {
 
         return $num_rows == 1 ? $wids[0] : $wids;
     }
+
+	/**
+	 * Player start villages (mode 0): capped farthest-point placement.
+	 * Each village goes on the free 4-4-4-6 tile farthest from every existing
+	 * village, with the distance capped at SPAWN_GAP so that small groups stay
+	 * together; ties go to the tile nearest the quadrant's seed (11|11 mirrored),
+	 * then random. Nothing within SPAWN_MIN_RADIUS of (0|0) (the unique-artifact
+	 * ring). When the best tile would be closer than SPAWN_SPILL_GAP to another
+	 * village, the two neighbouring quadrants are searched too.
+	 * Each pick is claimed atomically, so concurrent sign-ups never share a tile.
+	 *
+	 * @return int|array one wid, or an array of wids when more were requested
+	 */
+	private function generateSpawnBase($sector, $numberOfVillages) {
+	    $gap      = defined('SPAWN_GAP') ? (float) SPAWN_GAP : 6;
+	    $spillGap = defined('SPAWN_SPILL_GAP') ? (float) SPAWN_SPILL_GAP : 4;
+	    $minR     = defined('SPAWN_MIN_RADIUS') ? (float) SPAWN_MIN_RADIUS : 7;
+	    $seedAbs  = defined('SPAWN_SEED') ? (int) SPAWN_SEED : 11;
+	    $size     = 2 * WORLD_MAX + 1;
+
+	    // quadrant => [x sign, y sign] and its SQL predicate (same partition as generateBase)
+	    $quads = [1 => [-1, 1, "x < 0 AND y >= 0"], 2 => [1, 1, "x >= 0 AND y > 0"],
+	              3 => [-1, -1, "x <= 0 AND y < 0"], 4 => [1, -1, "x > 0 AND y <= 0"]];
+	    $sector = isset($quads[$sector]) ? $sector : 4;
+	    $opposite = [1 => 4, 2 => 3, 3 => 2, 4 => 1][$sector];
+	    $seed = [$quads[$sector][0] * $seedAbs, $quads[$sector][1] * $seedAbs];
+
+	    $candidates = function (array $sectors) use ($quads, $minR) {
+	        $where = implode(' OR ', array_map(function ($q) use ($quads) { return '(' . $quads[$q][2] . ')'; }, $sectors));
+	        $res = mysqli_query($this->dblink, "SELECT id, x, y FROM " . TB_PREFIX . "wdata
+	            WHERE fieldtype = 3 AND occupied = 0 AND ($where) AND POWER(x, 2) + POWER(y, 2) >= " . ($minR * $minR));
+	        return $res ? $this->mysqli_fetch_all($res) : [];
+	    };
+	    $res = mysqli_query($this->dblink, "SELECT w.x, w.y FROM " . TB_PREFIX . "vdata v JOIN " . TB_PREFIX . "wdata w ON w.id = v.wref");
+	    $villages = $res ? $this->mysqli_fetch_all($res) : [];
+
+	    $dist = function ($a, $b) use ($size) {   // wrapped map distance
+	        $dx = abs($a['x'] - $b['x']); $dy = abs($a['y'] - $b['y']);
+	        return sqrt(pow(min($dx, $size - $dx), 2) + pow(min($dy, $size - $dy), 2));
+	    };
+	    $pick = function (array $tiles) use (&$villages, $dist, $gap, $seed) {
+	        $best = null;
+	        foreach ($tiles as $t) {
+	            $near = INF;
+	            foreach ($villages as $v) { $near = min($near, $dist($t, $v)); }
+	            $key = [min($near, $gap), -$dist($t, ['x' => $seed[0], 'y' => $seed[1]]), mt_rand()];
+	            if ($best === null || $key > $best[0]) $best = [$key, $t, $near];
+	        }
+	        return $best;
+	    };
+
+	    $home = $candidates([$sector]);
+	    $wide = null;
+	    $wids = [];
+	    while ($numberOfVillages > 0 && ($home || $wide)) {
+	        $best = $home ? $pick($home) : null;
+	        if (!$best || $best[2] < $spillGap) {
+	            if ($wide === null) $wide = $candidates(array_diff([1, 2, 3, 4], [$opposite]));
+	            $best = $wide ? $pick($wide) : $best;
+	        }
+	        if (!$best) break;
+	        $tile = $best[1];
+	        $home = array_values(array_filter($home, function ($t) use ($tile) { return $t['id'] != $tile['id']; }));
+	        if ($wide !== null) $wide = array_values(array_filter($wide, function ($t) use ($tile) { return $t['id'] != $tile['id']; }));
+	        // claim it now; another sign-up may have taken it since the SELECT
+	        mysqli_query($this->dblink, "UPDATE " . TB_PREFIX . "wdata SET occupied = 1 WHERE id = " . (int) $tile['id'] . " AND occupied = 0");
+	        if (mysqli_affected_rows($this->dblink) !== 1) continue;
+	        $villages[] = $tile;
+	        $wids[] = (int) $tile['id'];
+	        $numberOfVillages--;
+	    }
+	    return count($wids) == 1 ? $wids[0] : $wids;
+	}
 
 	function setFieldTaken($id) {
         if(empty($id)) return;
