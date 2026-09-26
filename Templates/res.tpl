@@ -115,9 +115,39 @@ if (!empty($village)) {
             // Seconds until each store is full (or, when production is negative, empty).
             $resTimers = [[$wood, $woodStore, $maxStore], [$clay, $clayStore, $maxStore],
                           [$iron, $ironStore, $maxStore], [$crop, $cropStore, $maxCrop]];
-            foreach ($resTimers as [$prod, $stock, $cap]) {
+
+            // Crop: walk the troop training queues, each finished unit adding its upkeep,
+            // so "empty in" warns before the queue starves the village.
+            // ponytail: one event per queued unit, capped at 20k; fine for this round's sizes.
+            $events = [];
+            foreach ($database->getTraining($village->wid) as $row) {
+                $base = $row['unit'] > 1000 ? $row['unit'] - 1000 : (int) $row['unit'];
+                if ($base < 1 || $base > 90) continue; // traps (99) eat nothing
+                $u = $technology->getUpkeep(['u' . $base => 1], 0);
+                for ($k = 0; $k < $row['amt'] && count($events) < 20000; $k++) {
+                    $events[] = [$row['timestamp2'] + $k * $row['eachtime'], $u];
+                }
+            }
+            sort($events);
+            $t = time(); $s = $cropStore; $rate = $crop; $cropEmpty = $cropFull = null;
+            foreach (array_merge($events, [[PHP_INT_MAX, 0]]) as [$at, $u]) {
+                $dt = min($at, $t + 365 * 86400) - $t;
+                if ($rate < 0 && $s + $rate * $dt / 3600 <= 0) { $cropEmpty = $t + $s / -$rate * 3600; break; }
+                if ($rate > 0 && $cropFull === null && $s + $rate * $dt / 3600 >= $maxCrop) $cropFull = $t + ($maxCrop - $s) / $rate * 3600;
+                $s = min($maxCrop, $s + $rate * $dt / 3600); $rate -= $u; $t = $at;
+            }
+
+            foreach ($resTimers as $i => [$prod, $stock, $cap]) {
                 echo '<td></td><td>';
-                if ($prod > 0) {
+                if ($i == 3 && $events) {
+                    if ($cropEmpty !== null) {
+                        echo '<span class="neg">' . ($stock <= 0 ? RND_RES_EMPTY
+                            : RND_RES_EMPTY_IN . ' <span data-left="' . (int) ceil($cropEmpty - time()) . '"></span>') . '</span>';
+                    } elseif ($cropFull !== null) {
+                        echo $stock >= $cap ? RND_RES_FULL
+                            : RND_RES_FULL_IN . ' <span data-left="' . (int) ceil($cropFull - time()) . '"></span>';
+                    }
+                } elseif ($prod > 0) {
                     echo $stock >= $cap ? RND_RES_FULL
                         : RND_RES_FULL_IN . ' <span data-left="' . (int) ceil(($cap - $stock) / $prod * 3600) . '"></span>';
                 } elseif ($prod < 0) {
@@ -177,5 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <?php } ?>
+
+<?php include __DIR__ . '/Round/attack_alert.tpl'; ?>
 
 <?php } ?>

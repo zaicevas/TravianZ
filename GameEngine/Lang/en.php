@@ -4565,6 +4565,7 @@ tz_def('RND_RES_FULL_IN',            'full in');
 tz_def('RND_RES_EMPTY',              'Empty');
 tz_def('RND_RES_EMPTY_IN',           'empty in');
 tz_def('RND_WINDOW_CLOSES_IN',       'Window closes in');
+tz_def('RND_ATTACK_INCOMING',        'Incoming attack on %s in');
 tz_def('RND_CLOSED_SESSION_IN',      'Session begins in');
 tz_def('RND_CLOSED_REPORTS_TITLE',   'Reports from previous gaming windows');
 tz_def('RND_CLOSED_NEXT',            'Next session: %1$s (daily window %2$s).');

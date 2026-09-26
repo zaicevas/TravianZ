@@ -60,6 +60,9 @@ trait DatabaseSystemQueries {
 
             // fetch results of the multi-query in order to allow subsequent query() and multi_query() calls to work
             while (mysqli_more_results($this->dblink) && mysqli_next_result($this->dblink)) {;}
+            // struct.sql sets NO_AUTO_VALUE_ON_ZERO for the session; the world generation
+            // (inserts id 0 = auto) fails on the same connection (the admin reset) without this.
+            mysqli_query($this->dblink, "SET SESSION sql_mode = @@GLOBAL.sql_mode");
 
             if (!$result) {
                 return false;

@@ -38,36 +38,46 @@ if($keepAdmin){
     $adminData = mysqli_fetch_assoc($res);
 }
 
+// Multihunter keeps its current password (the stock reset set "12345" with admin
+// access, i.e. a public admin login). No existing account: an unguessable one.
+$res = mysqli_query($GLOBALS["link"], "SELECT password FROM `".TB_PREFIX."users` WHERE id = 5 LIMIT 1");
+$mhPass = ($row = mysqli_fetch_assoc($res)) && $row['password'] !== '' ? $row['password']
+    : password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT, ['cost' => 12]);
+
 // Round bookkeeping (last weekly gold period, final artifact snapshot) belongs
 // to the old round; the admin's round settings are kept.
 include_once("../../GameEngine/RoundControl.php");
 RoundControl::clearRoundState();
 
-// 2. Golim tot - fără FK checks
+// 2. Wipe every round table (the stock hard-coded list missed newer ones - hero items,
+// global chat, statistics - and named ones that no longer exist). Admin configuration
+// that is not round data is kept.
+$keep = ['round_settings', 'quest_config', 'reg_block', 'gold_promo', 'banlist_ip'];
 mysqli_query($GLOBALS["link"], "SET FOREIGN_KEY_CHECKS=0");
-
-$tables = ["a2b","abdata","activate","active","admin_log","alidata","ali_invite","ali_log","ali_permission","allimedal","artefacts","attacks","banlist","bdata","build_log","chat","deleting","demolition","diplomacy","enforcement","farmlist","fdata","forum_cat","forum_edit","forum_post","forum_survey","forum_topic","general","gold_fin_log","hero","illegal_log","links","login_log","market","market_log","mdata","medal","movement","ndata","online","odata","password","prisoners","raidlist","research","route","send","tdata","tech_log","training","units","vdata","wdata","ww_attacks","croppers","users"];
-
-foreach($tables as $t){
-    mysqli_query($GLOBALS["link"], "TRUNCATE TABLE `".TB_PREFIX.$t."`");
+$res = mysqli_query($GLOBALS["link"], "SHOW TABLES");
+while ($row = mysqli_fetch_row($res)) {
+    $t = $row[0];
+    if (strpos($t, TB_PREFIX) === 0 && !in_array(substr($t, strlen(TB_PREFIX)), $keep, true)) {
+        mysqli_query($GLOBALS["link"], "TRUNCATE TABLE `$t`");
+    }
 }
-
 mysqli_query($GLOBALS["link"], "SET FOREIGN_KEY_CHECKS=1");
 
-// 3. Recreăm structura și harta
+// 3. Same path as the installer: struct.sql re-seeds the system accounts (Support,
+// Nature, Taskmaster, Multihunter) and config rows, then the map is generated.
+$autoprefix = '../../';
 $database->createDbStructure();
 $database->populateWorldData();
 
-// 4. Conturi sistem
-$passw = password_hash("12345", PASSWORD_BCRYPT, ['cost' => 12]);
-mysqli_query($GLOBALS["link"], "INSERT INTO `".TB_PREFIX."users` (id, username, password, email, tribe, access, gold, plus, protect) VALUES
-(1, 'Support', '', 'support@travianz.game', 0, 8, 0, 0, 0),
-(2, 'Nature', '', 'nature@travianz.game', 4, 8, 0, 0, 0),
-(4, 'Taskmaster', '', 'taskmaster@travianz.game', 0, 8, 0, 0, 0),
-(5, 'Multihunter', '$passw', 'multihunter@travianx.mail', 0, 9, 0, 0, 0)");
+// 4. Multihunter: its previous password (the seed has none)
+$passw = mysqli_real_escape_string($GLOBALS["link"], $mhPass);
+mysqli_query($GLOBALS["link"], "UPDATE `".TB_PREFIX."users` SET password = '$passw' WHERE id = 5");
 
 // 5. Reintroducem adminul
-if($keepAdmin && $adminData){
+if($keepAdmin && $adminData && $admin_id == 5){
+    // the admin is Multihunter itself: already back as id 5, just restore its access
+    mysqli_query($GLOBALS["link"], "UPDATE `".TB_PREFIX."users` SET access = ".(int)$adminData['access']." WHERE id = 5");
+} elseif($keepAdmin && $adminData){
     $u = mysqli_real_escape_string($GLOBALS["link"], $adminData['username']);
     $p = mysqli_real_escape_string($GLOBALS["link"], $adminData['password']);
     $e = mysqli_real_escape_string($GLOBALS["link"], $adminData['email']);
@@ -80,7 +90,7 @@ if($keepAdmin && $adminData){
 
 // 6. Log (proxy-aware, issue #185)
 $resetIp = \App\Utils\IpResolver::getClientIp() ?? ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
-mysqli_query($GLOBALS["link"], "INSERT INTO `".TB_PREFIX."admin_log` (user, ip, time, action) VALUES (".(int)$_SESSION['id'].", '".$resetIp."', ".time().", 'Server reset".($keepAdmin ? ' (admin kept)' : '')."')");
+mysqli_query($GLOBALS["link"], "INSERT INTO `".TB_PREFIX."admin_log` (user, log, time) VALUES (".(int)$_SESSION['id'].", '".mysqli_real_escape_string($GLOBALS["link"], "Server reset".($keepAdmin ? ' (admin kept)' : '')." from ".$resetIp)."', ".time().")");
 
 header("Location: ../admin.php?p=resetdone");
 exit;

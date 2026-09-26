@@ -82,7 +82,15 @@ trait AutomationVillageUpkeep {
 
     private function loyaltyRegeneration() {
     	global $database;
-        
+
+        // Play window on: loyalty is restored once per session (keyed by the session's
+        // start), never while the window is closed. Window off: stock hourly regen.
+        $session = null;
+        if (RoundControl::windowEnabled()) {
+            if (!RoundControl::isPlayable()) return;
+            $session = RoundControl::nextWindowStart();
+        }
+
         $array = [];
         $array = $database->getProfileVillages(0, 6);
         if(!empty($array)) {
@@ -110,7 +118,13 @@ trait AutomationVillageUpkeep {
                     }
                 }
                 
-                if($value > 0){
+                if ($session !== null) {
+                    // Travikas: once per session, 2 + building level x 2 (no building needed).
+                    if ($loyalty['lastupdate2'] < $session) {
+                        $newloyalty = min(100, $loyalty['loyalty'] + 2 + $value * 2);
+                        $database->query("UPDATE ".TB_PREFIX."vdata SET loyalty = $newloyalty, lastupdate2=".time()." WHERE wref = ".(int) $loyalty['wref']);
+                    }
+                } elseif($value > 0){
                     $newloyalty = min(100, $loyalty['loyalty'] + $value * (time() - $loyalty['lastupdate2']) / 3600);
                     $q = "UPDATE ".TB_PREFIX."vdata SET loyalty = $newloyalty, lastupdate2=".time()." WHERE wref = '".$loyalty['wref']."'";
                     $database->query($q);
@@ -125,7 +139,12 @@ trait AutomationVillageUpkeep {
             foreach($array as $loyalty) {
                 $value = $this->getTypeLevel(37, $loyalty['conqured']);   
                 
-                if($value > 0){
+                if ($session !== null) {
+                    if ($loyalty['lastupdated'] < $session) {
+                        $newloyalty = min(100, $loyalty['loyalty'] + 2 + $value * 2);
+                        $database->query("UPDATE ".TB_PREFIX."odata SET loyalty = $newloyalty, lastupdated=".time()." WHERE wref = ".(int) $loyalty['wref']);
+                    }
+                } elseif($value > 0){
                     $newloyalty = min(100, $loyalty['loyalty'] + $value * (time() - $loyalty['lastupdated']) / 3600);
                     $q = "UPDATE ".TB_PREFIX."odata SET loyalty = $newloyalty, lastupdated=".time()." WHERE wref = '".$loyalty['wref']."'";
                     $database->query($q);

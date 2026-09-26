@@ -111,6 +111,9 @@ if ($newStart !== null) {
     if (!RoundControl::writeStart($newStart, $autoprefix . 'GameEngine/config.php')) {
         roundSettings_back(false, 'Could not write the round start to GameEngine/config.php (file permissions?). Nothing was saved.');
     }
+    // Accounts registered before the start are protected from the start (see register()):
+    // move their protection with it, or an earlier start leaves them overprotected.
+    mysqli_query($GLOBALS['link'], "UPDATE " . TB_PREFIX . "users SET protect = GREATEST(regtime, " . (int) $newStart . ") + " . (int) PROTECTION . " WHERE id > 5");
     $changed[] = 'round start: ' . RoundControl::fmt($oldStart) . ' -> ' . RoundControl::fmt($newStart);
 }
 foreach ($new as $name => $value) {

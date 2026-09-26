@@ -697,7 +697,8 @@ trait AutomationBattleResolution {
 
         if (($toF['loyalty'] - $reducedLoyaltyTotal) > 0) {
             $info_chief = $chief_pic . ',' . rc_tok('RC_LOYALTY_LOWERED', floor($toF['loyalty']), floor($toF['loyalty'] - $reducedLoyaltyTotal));
-            $database->setVillageField($data['to'], 'loyalty', ($toF['loyalty'] - $reducedLoyaltyTotal));
+            // lastupdate2 stamp: no per-session restore for the rest of this session
+            $database->setVillageFields($data['to'], ['loyalty', 'lastupdate2'], [($toF['loyalty'] - $reducedLoyaltyTotal), time()]);
             return ['info_chief' => $info_chief, 'chiefing_village' => $chiefing_village, 'village_destroyed' => $village_destroyed];
         }
 
