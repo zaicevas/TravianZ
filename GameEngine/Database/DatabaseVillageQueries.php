@@ -244,8 +244,8 @@ trait DatabaseVillageQueries {
 	 * @return int|array one wid, or an array of wids when more were requested
 	 */
 	private function generateSpawnBase($sector, $numberOfVillages) {
-	    $gap      = defined('SPAWN_GAP') ? (float) SPAWN_GAP : 6;
-	    $spillGap = defined('SPAWN_SPILL_GAP') ? (float) SPAWN_SPILL_GAP : 4;
+	    $gap      = defined('SPAWN_GAP') ? (float) SPAWN_GAP : 3;
+	    $spillGap = defined('SPAWN_SPILL_GAP') ? (float) SPAWN_SPILL_GAP : 2.5;
 	    $minR     = defined('SPAWN_MIN_RADIUS') ? (float) SPAWN_MIN_RADIUS : 7;
 	    $seedAbs  = defined('SPAWN_SEED') ? (int) SPAWN_SEED : 11;
 	    $size     = 2 * WORLD_MAX + 1;
