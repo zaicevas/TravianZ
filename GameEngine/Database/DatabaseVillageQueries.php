@@ -1684,7 +1684,7 @@ trait DatabaseVillageQueries {
             UPDATE " . TB_PREFIX . "users as users
                 SET cp = cp + (
                         ( SELECT sum($field) FROM " . TB_PREFIX . "vdata as vdata WHERE vdata.owner = users.id ".($field == 'cp' ? ' AND vdata.natar = 0' : '')." ) *
-                        (UNIX_TIMESTAMP() - lastupdate) / $dur_day
+                        GREATEST(0, UNIX_TIMESTAMP() - GREATEST(lastupdate, " . RoundControl::roundStart() . ")) / $dur_day
                     ),
                     lastupdate = UNIX_TIMESTAMP()
                 WHERE

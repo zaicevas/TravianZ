@@ -400,7 +400,7 @@ trait AutomationVillageUpkeep {
     	$upkeep = $technology->getUpkeep($this->getAllUnits($bountywid), 0, $bountywid);   	
  
     	//Calculate the produced resources
-    	$timepast = time() - $villageInfoArray['lastupdate'];
+    	$timepast = max(0, time() - max($villageInfoArray['lastupdate'], RoundControl::roundStart()));
     	$nwood = ($this->bountyGetResourceProd($resArray, $numberOfOasis, 1) / 3600) * $timepast;
     	$nclay = ($this->bountyGetResourceProd($resArray, $numberOfOasis, 2) / 3600) * $timepast;
     	$niron = ($this->bountyGetResourceProd($resArray, $numberOfOasis, 3) / 3600) * $timepast;

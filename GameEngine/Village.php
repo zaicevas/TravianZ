@@ -244,7 +244,8 @@ class Village {
 	 */
 	private function processProduction(): void {
 		// hardening: do not let a lastupdate from the future (clock skew) produce a negative delta
-		$timepast = max(0, time() - $this->infoarray['lastupdate']);
+		// nothing accrues before the round start: early sign-ups start equal
+		$timepast = max(0, time() - max($this->infoarray['lastupdate'], RoundControl::roundStart()));
 
 		$nwood = min(($this->production['wood'] / 3600) * $timepast, $this->maxstore);
 		$nclay = min(($this->production['clay'] / 3600) * $timepast, $this->maxstore);
