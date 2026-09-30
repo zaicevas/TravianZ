@@ -44,27 +44,29 @@ SELECT IFNULL(AVG(pop + cp), 0) INTO @avgPlayerProgress FROM %PREFIX%vdata WHERE
 -- Calculate growth factor based on player progression
 -- Scale between 0.3 and 3.0
 -- ----------------------------------------------------------------
-SET @growthFactor = LEAST(3.0, GREATEST(0.3, @avgPlayerProgress / 1000));
+SET @growthFactor = LEAST(1.5, GREATEST(0.3, @avgPlayerProgress / 1000));
+-- Traviancikas: animals at half strength (farmable oases); increments use @incFactor
+SET @incFactor = @growthFactor * 0.5;
 
 -- faster access to first oasis ID, so we don't need to reselect all the time below 
 SET @firstVillage = (SELECT id FROM %PREFIX%oids LIMIT 1);
 
 -- minimum and maximum number of units for oasis with "high" field set to 0
-SET @minUnitsForOasis0 = GREATEST(5, FLOOR(5 * @growthFactor));
-SET @maxUnitsForOasis0 = LEAST(FLOOR(@minUnitsForOasis0 + 5  + (@playerCount * 1.5) * @growthFactor), 30);
+SET @minUnitsForOasis0 = GREATEST(3, FLOOR(2.5 * @growthFactor));
+SET @maxUnitsForOasis0 = LEAST(FLOOR(@minUnitsForOasis0 + 3 + (@playerCount * 0.75) * @growthFactor), 15);
 
 -- minimum and maximum number of units for oasis with "high" field set to 1
-SET @minUnitsForOasis1 = GREATEST(10, FLOOR(10 * @growthFactor));
-SET @maxUnitsForOasis1 = LEAST(FLOOR(@minUnitsForOasis1 + 10 + (@playerCount * 2) * @growthFactor), 60);
+SET @minUnitsForOasis1 = GREATEST(5, FLOOR(5 * @growthFactor));
+SET @maxUnitsForOasis1 = LEAST(FLOOR(@minUnitsForOasis1 + 5 + (@playerCount * 1) * @growthFactor), 30);
 
 -- minimum and maximum number of units for oasis with "high" field set to 2
-SET @minUnitsForOasis2 = GREATEST(20, FLOOR(20 * @growthFactor));
-SET @maxUnitsForOasis2 = LEAST(FLOOR(@minUnitsForOasis2 + 15 + (@playerCount * 3) * @growthFactor), 90);
+SET @minUnitsForOasis2 = GREATEST(10, FLOOR(10 * @growthFactor));
+SET @maxUnitsForOasis2 = LEAST(FLOOR(@minUnitsForOasis2 + 8 + (@playerCount * 1.5) * @growthFactor), 45);
 
 -- Setting a maximum for every type of Oasis so large servers won't turn oasis into fortresses
-SET @maxUnitsForOasis0 = LEAST(@maxUnitsForOasis0, 30);
-SET @maxUnitsForOasis1 = LEAST(@maxUnitsForOasis1, 60);
-SET @maxUnitsForOasis2 = LEAST(@maxUnitsForOasis2, 90);
+SET @maxUnitsForOasis0 = LEAST(@maxUnitsForOasis0, 15);
+SET @maxUnitsForOasis1 = LEAST(@maxUnitsForOasis1, 30);
+SET @maxUnitsForOasis2 = LEAST(@maxUnitsForOasis2, 45);
 
 -- ----------------------------------------
 -- reset oasis data (conquered > unoccupied)
@@ -104,7 +106,7 @@ DELETE FROM %PREFIX%ndata
 UPDATE
     %PREFIX%odata
 SET
-    lastupdated2 = UNIX_TIMESTAMP() + @natureRegTime
+    lastupdated2 = UNIX_TIMESTAMP() -- the automation adds NATURE_REGTIME when checking (was added twice: 12 h meant 24 h)
 WHERE
     @natureRegTime > -1
     AND
@@ -147,19 +149,19 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u.u35 = LEAST(u.u35 + FLOOR((5 + RAND() * 10) * @growthFactor),
+    u.u35 = LEAST(u.u35 + FLOOR((5 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u.u36 = LEAST(u.u36 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u.u36 = LEAST(u.u36 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u.u37 = LEAST(u.u37 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u.u37 = LEAST(u.u37 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -176,31 +178,31 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u35 = LEAST(u35 + FLOOR((5 + RAND() * 15) * @growthFactor),
+    u35 = LEAST(u35 + FLOOR((5 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u36 = LEAST(u36 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u36 = LEAST(u36 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u37 = LEAST(u37 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u37 = LEAST(u37 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @growthFactor),
+    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -217,19 +219,19 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u32 = LEAST(u32 + FLOOR((5 + RAND() * 15) * @growthFactor),
+    u32 = LEAST(u32 + FLOOR((5 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u35 = LEAST(u35 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u35 = LEAST(u35 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -246,25 +248,25 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((15 + RAND() * 20) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((15 + RAND() * 20) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u32 = LEAST(u32 + FLOOR((10 + RAND() * 15) * @growthFactor),
+    u32 = LEAST(u32 + FLOOR((10 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u35 = LEAST(u35 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u35 = LEAST(u35 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @growthFactor),
+    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -281,19 +283,19 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u32 = LEAST(u32 + FLOOR((5 + RAND() * 15) * @growthFactor),
+    u32 = LEAST(u32 + FLOOR((5 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u34 = LEAST(u34 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u34 = LEAST(u34 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -310,25 +312,25 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((15 + RAND() * 20) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((15 + RAND() * 20) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u32 = LEAST(u32 + FLOOR((10 + RAND() * 15) * @growthFactor),
+    u32 = LEAST(u32 + FLOOR((10 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u34 = LEAST(u34 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u34 = LEAST(u34 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u39 = LEAST(u39 + FLOOR((0 + RAND() * 3) * @growthFactor),
+    u39 = LEAST(u39 + FLOOR((0 + RAND() * 3) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -345,31 +347,31 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((5 + RAND() * 15) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((5 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u33 = LEAST(u33 + FLOOR((5 + RAND() * 10) * @growthFactor),
+    u33 = LEAST(u33 + FLOOR((5 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u37 = LEAST(u37 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u37 = LEAST(u37 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u39 = LEAST(u39 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u39 = LEAST(u39 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
@@ -386,37 +388,37 @@ WHERE
 UPDATE %PREFIX%units u
 JOIN %PREFIX%odata o ON u.vref = o.wref
 SET
-    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @growthFactor),
+    u31 = LEAST(u31 + FLOOR((10 + RAND() * 15) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u33 = LEAST(u33 + FLOOR((5 + RAND() * 10) * @growthFactor),
+    u33 = LEAST(u33 + FLOOR((5 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u37 = LEAST(u37 + FLOOR((0 + RAND() * 10) * @growthFactor),
+    u37 = LEAST(u37 + FLOOR((0 + RAND() * 10) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u38 = LEAST(u38 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u39 = LEAST(u39 + FLOOR((0 + RAND() * 5) * @growthFactor),
+    u39 = LEAST(u39 + FLOOR((0 + RAND() * 5) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
             WHEN 2 THEN FLOOR(@minUnitsForOasis2 + RAND() * (@maxUnitsForOasis2 - @minUnitsForOasis2))
         END),
-    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @growthFactor),
+    u40 = LEAST(u40 + FLOOR((0 + RAND() * 3) * @incFactor),
         CASE o.high
             WHEN 0 THEN FLOOR(@minUnitsForOasis0 + RAND() * (@maxUnitsForOasis0 - @minUnitsForOasis0))
             WHEN 1 THEN FLOOR(@minUnitsForOasis1 + RAND() * (@maxUnitsForOasis1 - @minUnitsForOasis1))
