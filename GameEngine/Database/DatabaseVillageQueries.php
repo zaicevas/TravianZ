@@ -428,7 +428,8 @@ trait DatabaseVillageQueries {
         (wref, owner, name, capital, pop, cp, celebration, wood, clay, iron, maxstore, crop, maxcrop, lastupdate, created, natar) 
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     );
-    $cp = 1; $celebration = 0; $wood = 750; $clay = 750; $iron = 750; $crop = 750;
+    // Traviancikas: a player's first village (capital) starts with full storage; others 750
+    $cp = 1; $celebration = 0; $wood = $clay = $iron = $crop = ($capital && !$isNatar) ? $storage : 750;
     $stmt->bind_param("iisiiiiiiiiiiiii", 
         $wid, $uid, $villageName, $capital, $pop, $cp, $celebration, 
         $wood, $clay, $iron, $storage, $crop, $storage, $time, $time, $isNatar
