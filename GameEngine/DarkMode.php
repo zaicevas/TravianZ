@@ -46,21 +46,31 @@ html.tz-dark #content.village2 > h1 { filter: invert(1) hue-rotate(180deg); }
     // holds text would leave dark text on the dark page behind it. Other
     // panels stay inverted, their texture negative but the text readable.
     var PICTURES = '#header, #navigation, #village_map, #map_content, #mapContainer, .map, #qstbg, #content.village3';
-    function mark() {
+    function mark(scope) {
         if (!root.classList.contains('tz-dark')) return;
-        var all = document.body ? document.body.getElementsByTagName('*') : [];
+        scope = scope || document.body;
+        if (!scope || scope.nodeType !== 1) return;
+        var all = [scope].concat(Array.prototype.slice.call(scope.getElementsByTagName('*')));
         for (var i = 0; i < all.length; i++) {
             var el = all[i], bg;
             if (el.classList.contains('tz-keep') || /^(IMG|VIDEO|CANVAS|IFRAME|SCRIPT|STYLE|BR|OPTION)$/.test(el.tagName)) continue;
             bg = getComputedStyle(el).backgroundImage;
             if (!bg || bg.indexOf('url(') < 0) continue;
             if (/\S/.test(el.textContent) && !el.matches(PICTURES)) continue;
-            if (el.parentNode.closest && el.parentNode.closest('.tz-keep')) continue;
+            if (el.parentNode && el.parentNode.closest && el.parentNode.closest('.tz-keep')) continue;
             el.classList.add('tz-keep');
         }
     }
-    var queued = false;
-    function schedule() { if (!queued) { queued = true; setTimeout(function () { queued = false; mark(); }, 50); } }
+    // Content added later (quest popup, chat, ajax) is marked in the observer
+    // callback itself: it runs before the next paint, so a new picture is never
+    // shown inverted for a frame (that was a black-box flash on every page).
+    function onMutations(list) {
+        for (var i = 0; i < list.length; i++) {
+            var m = list[i];
+            if (m.type === 'attributes') { mark(m.target); continue; }
+            for (var j = 0; j < m.addedNodes.length; j++) mark(m.addedNodes[j]);
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         var b = document.createElement('button');
@@ -80,9 +90,9 @@ html.tz-dark #content.village2 > h1 { filter: invert(1) hue-rotate(180deg); }
         label();
         document.body.appendChild(b);
         mark();
-        if (window.MutationObserver) new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+        if (window.MutationObserver) new MutationObserver(onMutations).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
     });
-    window.addEventListener('load', mark);
+    window.addEventListener('load', function () { mark(); });
 })();
 </script>
 HTML;
