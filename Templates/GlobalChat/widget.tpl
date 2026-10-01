@@ -867,6 +867,9 @@ $GLOBALS['gchatIncluded'] = true;
         if (countUnread === undefined) { countUnread = true; }
         var wasAtBottom = messagesBox.scrollTop + messagesBox.clientHeight >= messagesBox.scrollHeight - 4;
 
+        // two polls in flight (the send triggers one while the timer's is still
+        // out) both return the new message: keep each id once
+        rows = rows.filter(function (row) { return row.id > lastId; });
         var empty = rows.length && document.getElementById('gchat_empty');
         if (empty) { empty.parentNode.removeChild(empty); }
         rows.forEach(function (row) {
@@ -924,6 +927,7 @@ $GLOBALS['gchatIncluded'] = true;
             .then(function (data) {
                 if (!data || !data.ok) { return; }
                 messagesBox.innerHTML = '';
+                lastId = 0; // the box was just emptied: everything below is new again
                 if (!data.messages || !data.messages.length) {
                     var empty = document.createElement('div');
                     empty.id = 'gchat_empty';
