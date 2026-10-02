@@ -1405,7 +1405,7 @@ class Units {
 			$userID = $database->getUserField($villageOwner, 'id', 0);
 			
 			// farm-list raids (mission 4) honour PROTECTED_PLAYERS like the rally point does
-			if($userAccess != 0 && !($userAccess == MULTIHUNTER && $userID == 5) && ($userAccess != ADMIN || (ADMIN_ALLOW_INCOMING_RAIDS && $userAccess == ADMIN)) && !$this->isProtectedTarget($villageOwner, 4)){
+			if($userAccess != 0 && !($userAccess == MULTIHUNTER && $userID == 5) && ($userAccess != ADMIN || (ADMIN_ALLOW_INCOMING_RAIDS && $userAccess == ADMIN)) && !$this->isProtectedTarget($villageOwner, 4) && !RoundControl::onVacation($villageOwner)){
 				
 				//Start = the first troop of the player's tribe
 				//End =  the last selectable troop of the player's tribe

@@ -246,7 +246,7 @@ if($isOasis){
 <tr><td class="none">
 <?php
 if($banned) echo '&raquo; '.SENDTROOP.' ('.BAN.')';
-elseif($tUser['vac_mode']=='1') echo '&raquo; Send troops. (Vacation mode on)';
+elseif(RoundControl::onVacation($ownerId)) echo '&raquo; Send troops. (Vacation mode on)';
 elseif($tUser['protect'] < time()) echo $village->resarray['f39']>0? '<a href="a2b.php?s=2&z='.$d.'">&raquo; '.SENDTROOP.'</a>' : '&raquo; '.SENDTROOP.' ('.BUILDRALLY.')';
 else echo '&raquo; '.SENDTROOP.' ('.BEGINPRO.')';
 ?>
@@ -254,7 +254,7 @@ else echo '&raquo; '.SENDTROOP.' ('.BEGINPRO.')';
 <tr><td class="none">
 <?php
 if($banned) echo '&raquo; '.SENDMERC.' ('.BAN.')';
-elseif($tUser['vac_mode']=='1') echo '&raquo; Send merchant(s). (Vacation mode on)';
+elseif(RoundControl::onVacation($ownerId)) echo '&raquo; Send merchant(s). (Vacation mode on)';
 else echo $building->getTypeLevel(17)? '<a href="build.php?z='.$d.'&id='.$building->getTypeField(17).'">&raquo; '.SENDMERC.'</a>' : '&raquo; '.SENDMERC.' ('.BUILDMARKET.')';
 ?>
 </td></tr>

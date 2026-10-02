@@ -195,7 +195,7 @@ function __construct() {
     // automation (cron.php) does not go through this check.
     if ($this->logged_in) {
         global $autoprefix;
-        RoundControl::enforceSession($this->access, $this->username ?? '', $autoprefix);
+        RoundControl::enforceSession($this->access, $this->username ?? '', $autoprefix, $this->uid ?? 0);
     }
 
     // === DEBUG ERROR LOG (admin-controlled, transparent to players) ===

@@ -74,7 +74,7 @@ class RoundControl
     const WINDOW_FREE_PAGES = [
         'index.php', 'login.php', 'logout.php', 'anmelden.php', 'activate.php',
         'playwindow.php', 'results.php', 'guide.php', 'rules.php',
-        'banned.php', 'maintenance.php', 'winner.php',
+        'banned.php', 'maintenance.php', 'winner.php', 'vacation.php',
     ];
 
     /** In-game pages that stay viewable (GET only) after the round has ended. */
@@ -676,7 +676,7 @@ class RoundControl
      *
      * @param string $prefix path back to the web root ($autoprefix)
      */
-    public static function enforceSession($access, $username, $prefix = '')
+    public static function enforceSession($access, $username, $prefix = '', $uid = 0)
     {
         if (self::isStaff($access, $username)) {
             return;
@@ -706,7 +706,7 @@ class RoundControl
             self::deny('round_over', $prefix . 'results.php');
         }
 
-        if (!self::isPlayable() && !self::closedWindowAllows($page)) {
+        if ((!self::isPlayable() || self::onVacation($uid)) && !self::closedWindowAllows($page)) {
             self::deny('play_window_closed', $prefix . 'playwindow.php');
         }
     }
@@ -751,7 +751,7 @@ class RoundControl
         }
 
         $over   = self::isRoundOver();
-        $closed = !self::isPlayable();
+        $closed = !self::isPlayable() || self::onVacation($uid);
         if (!$over && !$closed) {
             return;
         }
@@ -780,6 +780,138 @@ class RoundControl
             return;
         }
         self::denyAjax($reason);
+    }
+
+    /* ---- Vacation: skip one play window -------------------------------- */
+
+    /**
+     * A player may book the next play window off: they cannot play in it, and
+     * from booking until that window closes nobody can send them troops or
+     * merchants (Units / Market / farm lists via Database::getvacmodexy()).
+     * Movements already under way still arrive. Production, queues, crop upkeep
+     * keep running; the warehouse cap bounds what a skipped day earns.
+     * Rows (uid, starts, ends) live in the `vacation` table, created lazily.
+     */
+    const VACATIONS_PER_ROUND = 3;
+
+    private static $vacation = [];
+
+    private static function vacationTable()
+    {
+        return '`' . TB_PREFIX . 'vacation`';
+    }
+
+    private static function vacationQuery($sql)
+    {
+        $link = self::link();
+        if (!$link) {
+            return false;
+        }
+        try {
+            return mysqli_query($link, $sql);
+        } catch (\Throwable $e) {
+            // table not created yet
+            return false;
+        }
+    }
+
+    /** The booked or running vacation of $uid: ['starts' => .., 'ends' => ..], or null. */
+    public static function vacation($uid)
+    {
+        $uid = (int) $uid;
+        if (!array_key_exists($uid, self::$vacation)) {
+            $r   = $uid > 0 ? self::vacationQuery("SELECT starts, ends FROM " . self::vacationTable() . " WHERE uid = $uid AND ends > " . time() . " LIMIT 1") : false;
+            $row = $r ? mysqli_fetch_assoc($r) : null;
+            self::$vacation[$uid] = $row ? array_map('intval', $row) : null;
+        }
+        return self::$vacation[$uid];
+    }
+
+    /** Protected from troops and merchants (and locked out of the game) right now. */
+    public static function onVacation($uid)
+    {
+        return self::vacation($uid) !== null;
+    }
+
+    public static function vacationsUsed($uid)
+    {
+        $r = self::vacationQuery("SELECT COUNT(*) FROM " . self::vacationTable() . " WHERE uid = " . (int) $uid);
+        return $r ? (int) mysqli_fetch_row($r)[0] : 0;
+    }
+
+    /** When $uid can play next: after a vacation, the window following it. */
+    public static function playStartFor($uid)
+    {
+        $v = self::vacation($uid);
+        return $v ? self::nextWindowStart($v['ends']) : self::nextPlayStart();
+    }
+
+    /** Why $uid cannot book the next window off right now (empty: they can). */
+    public static function vacationBlockers($uid)
+    {
+        $uid = (int) $uid;
+        $now = time();
+        $p   = TB_PREFIX;
+        $out = [];
+        if (!self::windowEnabled() || !self::hasStarted($now) || self::isRoundOver($now)) {
+            return [VAC_ERR_NO_ROUND];
+        }
+        if (self::isWindowOpen($now)) {
+            $out[] = VAC_ERR_WINDOW_OPEN;
+        } elseif (self::roundEnd() && self::nextWindowStart($now) >= self::roundEnd()) {
+            $out[] = VAC_ERR_LAST_WINDOW;
+        }
+        if (self::vacation($uid)) {
+            $out[] = VAC_ERR_BOOKED;
+        }
+        if (self::vacationsUsed($uid) >= self::VACATIONS_PER_ROUND) {
+            $out[] = sprintf(VAC_ERR_LIMIT, self::VACATIONS_PER_ROUND);
+        }
+        $link = self::link();
+        $has  = function ($sql) use ($link) {
+            $r = mysqli_query($link, $sql);
+            return $r && mysqli_num_rows($r) > 0;
+        };
+        // hit and hide: own attacks/raids still under way would land while the target cannot strike back
+        if ($has("SELECT 1 FROM {$p}movement m JOIN {$p}attacks a ON a.id = m.ref JOIN {$p}vdata v ON v.wref = m.`from`
+                  WHERE v.owner = $uid AND m.proc = 0 AND m.sort_type = 3 AND a.attack_type IN (3, 4) LIMIT 1")) {
+            $out[] = VAC_ERR_ATTACKS;
+        }
+        // the artifact race: holders must stay attackable
+        if ($has("SELECT 1 FROM {$p}artefacts WHERE owner = $uid LIMIT 1")) {
+            $out[] = VAC_ERR_ARTIFACT;
+        }
+        if ($has("SELECT 1 FROM {$p}fdata f JOIN {$p}vdata v ON v.wref = f.vref WHERE v.owner = $uid AND f.f99t = 40 LIMIT 1")) {
+            $out[] = VAC_ERR_WW;
+        }
+        return $out;
+    }
+
+    /** Book the next window off. Returns the blockers (empty array on success). */
+    public static function bookVacation($uid)
+    {
+        $errors = self::vacationBlockers($uid);
+        if ($errors) {
+            return $errors;
+        }
+        @mysqli_query(self::link(), "CREATE TABLE IF NOT EXISTS " . self::vacationTable() . " (
+            `uid`    int(11) NOT NULL,
+            `starts` int(11) NOT NULL,
+            `ends`   int(11) NOT NULL,
+            PRIMARY KEY (`uid`, `starts`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $starts = self::nextWindowStart();
+        self::vacationQuery("INSERT IGNORE INTO " . self::vacationTable() . " (uid, starts, ends) VALUES ("
+            . (int) $uid . ", $starts, " . self::nextWindowEnd($starts) . ")");
+        unset(self::$vacation[(int) $uid]);
+        return [];
+    }
+
+    /** Undo a booking, possible until the window opens. */
+    public static function cancelVacation($uid)
+    {
+        self::vacationQuery("DELETE FROM " . self::vacationTable() . " WHERE uid = " . (int) $uid . " AND starts > " . time());
+        unset(self::$vacation[(int) $uid]);
     }
 
     /* ---- Automation ----------------------------------------------------- */
@@ -824,6 +956,7 @@ class RoundControl
         } catch (\Throwable $e) {
             // table does not exist yet: nothing to clear
         }
+        self::vacationQuery("DELETE FROM " . self::vacationTable());
         self::reload();
         return true;
     }

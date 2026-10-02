@@ -54,7 +54,7 @@ if ($x!== '' && $y!== '' && is_numeric($x) && is_numeric($y)) {
 if ($checkexist) {
     $villageOwner = (int)$database->getVillageField($getwref, 'owner');
     $userAccess = (int)$database->getUserField($villageOwner, 'access', 0);
-    $userVacation = (int)$database->getUserField($villageOwner, 'vac_mode', 0);
+    $userVacation = (int) RoundControl::onVacation($villageOwner);
     $userID = (int)$database->getUserField($villageOwner, 'id', 0);
 
     $target = [

@@ -800,28 +800,13 @@ trait DatabaseUserQueries {
 		return;
     }
 
+    /** Is the owner of the village or oasis at $wref on vacation (RoundControl: one skipped play window)? */
     function getvacmodexy($wref){
-        // TODO: refactor vacation mode
-        list ($wref) = $this->escape_input((int) $wref);
-        $q = "SELECT id,oasistype,occupied FROM " . TB_PREFIX . "wdata where id = $wref";
-        $result = mysqli_query($this->dblink, $q);
-        $dbarray = mysqli_fetch_array($result);
-        if ($dbarray['occupied'] != 0 && $dbarray['oasistype'] == 0) {
-            $q1 = "SELECT owner FROM " . TB_PREFIX . "vdata where wref = " . (int) $dbarray['id'] . "";
-            $result1 = mysqli_query($this->dblink, $q1);
-            $dbarray1 = mysqli_fetch_array($result1);
-            if ($dbarray1['owner'] != 0) {
-                $q2 = "SELECT vac_mode,vac_time FROM " . TB_PREFIX . "users where id = " . (int) $dbarray1['owner'] . "";
-                $result2 = mysqli_query($this->dblink, $q2);
-                $dbarray2 = mysqli_fetch_array($result2);
-                return $dbarray2['vac_mode'] == 1;
-            }
-        } 
-        else 
-		return 
-	false;
+        $wref  = (int) $wref;
+        $owner = $this->isVillageOases($wref) ? $this->getOasisField($wref, 'owner') : $this->getVillageField($wref, 'owner');
+        return RoundControl::onVacation($owner);
     }
-	
+
 	/*****************************************
     Function to vacation mode
     Remake & Refactor: Shadow 

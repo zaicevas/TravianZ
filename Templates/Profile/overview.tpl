@@ -111,7 +111,7 @@ if ($displayarray['access'] == MULTIHUNTER)
 if ($displayarray['access'] == BANNED)
     echo "<tr><th colspan='2'><font color='Green'><center><b>".PROFILE_FLAG_BANNED."</b></center></font></th></tr>";
 
-if ($displayarray['vac_mode'] == 1)
+if (RoundControl::onVacation($displayarray['id']))
     echo "<tr><th colspan='2'><font color='Maroon'><center><b>".PROFILE_FLAG_VACATION."</b></center></font></th></tr>";
 ?>
 

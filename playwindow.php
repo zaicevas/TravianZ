@@ -26,7 +26,7 @@ if (RoundControl::isRoundOver() && !$database->isThereAWinner()) {
 }
 
 // Nothing to wait for: the window is open, disabled, or this is a staff account.
-if (RoundControl::isPlayable() || RoundControl::isStaff($session->access, $session->username)) {
+if ((RoundControl::isPlayable() && !RoundControl::onVacation($session->uid)) || RoundControl::isStaff($session->access, $session->username)) {
 	header("Location: dorf1.php");
 	exit;
 }

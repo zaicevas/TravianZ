@@ -85,7 +85,7 @@ if(isset($_GET['newdid'])) {
 <?php include("Templates/menu.tpl"); ?>
 		<div id="content"  class="reports">
 <?php
-if (!isset($_GET['id']) && !RoundControl::isPlayable() && !RoundControl::isStaff($session->access, $session->username)) {
+if (!isset($_GET['id']) && (!RoundControl::isPlayable() || RoundControl::onVacation($session->uid)) && !RoundControl::isStaff($session->access, $session->username)) {
     include("Templates/Round/closed_header.tpl");
 } else { ?>
 <h1><?php echo REPORTS; ?></h1>
