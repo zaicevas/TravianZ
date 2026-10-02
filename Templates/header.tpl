@@ -227,7 +227,9 @@ if ($hour > 1759 || $hour < 500) {
             {
                 $cls = 'tzCoinStack tzCoin-' . $tone;
 
-                return '<svg viewBox="0 0 24 24" class="' . $cls . '" role="img">'
+                // width/height: the <style> sizing it comes later in the page; unsized, the SVG was
+                // painted page-wide for a frame (a huge black disc) on slow loads
+                return '<svg viewBox="0 0 24 24" width="16" height="16" class="' . $cls . '" role="img">'
                      . '<title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>'
                      . '<circle cx="12" cy="12" r="11" class="tzCoinBg" />'
                      . '<ellipse cx="12" cy="16.1" rx="6.2" ry="2.3" class="tzCoinDisc" />'

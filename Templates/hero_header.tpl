@@ -446,7 +446,9 @@ $tzCssVer = @filemtime('css/hero_header.css');
 <link rel="stylesheet" type="text/css"
       href="css/hero_header.css<?php echo $tzCssVer ? '?v=' . $tzCssVer : ''; ?>" />
 
-<div id="tzHeroBox" class="<?php echo $tzHeroDead ? 'tzHeroDeadState' : ''; ?>">
+<!-- hidden until css/hero_header.css applies (it is linked here in <body>, so the page can
+     paint before it: the unstyled SVG ring then showed as a huge black disc for a frame) -->
+<div id="tzHeroBox" style="visibility:hidden" class="<?php echo $tzHeroDead ? 'tzHeroDeadState' : ''; ?>">
 
     <!-- ============ STANGA: locatia eroului -> 37.tpl ============ -->
     <?php echo tzHeroSlotOpen($tzLinkHero, 'tzHeroSlot tzHeroHome', $tzHeroClickable); ?>
