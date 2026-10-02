@@ -792,8 +792,6 @@ class RoundControl
      * keep running; the warehouse cap bounds what a skipped day earns.
      * Rows (uid, starts, ends) live in the `vacation` table, created lazily.
      */
-    const VACATIONS_PER_ROUND = 3;
-
     private static $vacation = [];
 
     private static function vacationTable()
@@ -833,12 +831,6 @@ class RoundControl
         return self::vacation($uid) !== null;
     }
 
-    public static function vacationsUsed($uid)
-    {
-        $r = self::vacationQuery("SELECT COUNT(*) FROM " . self::vacationTable() . " WHERE uid = " . (int) $uid);
-        return $r ? (int) mysqli_fetch_row($r)[0] : 0;
-    }
-
     /** When $uid can play next: after a vacation, the window following it. */
     public static function playStartFor($uid)
     {
@@ -863,9 +855,6 @@ class RoundControl
         }
         if (self::vacation($uid)) {
             $out[] = VAC_ERR_BOOKED;
-        }
-        if (self::vacationsUsed($uid) >= self::VACATIONS_PER_ROUND) {
-            $out[] = sprintf(VAC_ERR_LIMIT, self::VACATIONS_PER_ROUND);
         }
         $link = self::link();
         $has  = function ($sql) use ($link) {

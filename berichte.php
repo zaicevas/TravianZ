@@ -214,6 +214,7 @@ if (isset($_GET['id']))
     unset($type);
 }
 else include("Templates/Notice/all.tpl");
+if (!empty($rndClosedView)) include("Templates/Round/vacation_box.tpl");
 ?>
 </div>
 
