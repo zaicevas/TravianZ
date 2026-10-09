@@ -73,7 +73,7 @@ $GLOBALS['gchatIncluded'] = true;
     #gchat_root.gchat_inline #gchat_head { padding: 8px 10px; font-size: 13px; }
     #gchat_root.gchat_inline .gchat_head_right { font-weight: normal; }
     #gchat_root.gchat_inline #gchat_panel { position: static; width: 100%; max-width: none; height: 420px; max-height: none; box-shadow: none; margin: 12px 0; }
-    #gchat_root.gchat_side { clear: both; padding-top: 10px; }
+    #gchat_root.gchat_side { clear: both; padding: 10px 0; }
     #gchat_root.gchat_side #gchat_panel { height: 360px; margin: 0; }
 
     #gchat_bubble {
@@ -1231,11 +1231,20 @@ $GLOBALS['gchatIncluded'] = true;
           });
     });
 
-    // In-game pages: open in the right column (under the hero / news) instead of the floating bubble.
+    // In-game pages: open in the right column, above the newsbox and its <h5>
+    // title (or at the column's end when the page has none), instead of the
+    // floating bubble.
     var sideInfo = document.getElementById('side_info');
     if (root.className.indexOf('gchat_inline') === -1 && sideInfo) {
         root.className += ' gchat_inline gchat_side';
-        sideInfo.appendChild(root);
+        var news = sideInfo.querySelector('.news');
+        if (news) {
+            var title = news.previousElementSibling;
+            var anchor = title && title.tagName === 'H5' ? title : news;
+            anchor.parentNode.insertBefore(root, anchor);
+        } else {
+            sideInfo.appendChild(root);
+        }
     }
 
     loadInitial();

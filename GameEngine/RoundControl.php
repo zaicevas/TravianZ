@@ -856,22 +856,11 @@ class RoundControl
         if (self::vacation($uid)) {
             $out[] = VAC_ERR_BOOKED;
         }
-        $link = self::link();
-        $has  = function ($sql) use ($link) {
-            $r = mysqli_query($link, $sql);
-            return $r && mysqli_num_rows($r) > 0;
-        };
-        // hit and hide: own attacks/raids still under way would land while the target cannot strike back
-        if ($has("SELECT 1 FROM {$p}movement m JOIN {$p}attacks a ON a.id = m.ref JOIN {$p}vdata v ON v.wref = m.`from`
-                  WHERE v.owner = $uid AND m.proc = 0 AND m.sort_type = 3 AND a.attack_type IN (3, 4) LIMIT 1")) {
-            $out[] = VAC_ERR_ATTACKS;
-        }
-        // the artifact race: holders must stay attackable
-        if ($has("SELECT 1 FROM {$p}artefacts WHERE owner = $uid LIMIT 1")) {
+        // Own attacks/raids under way do not block a booking (hit and hide is allowed).
+        // The artifact race: holders must stay attackable.
+        $r = mysqli_query(self::link(), "SELECT 1 FROM {$p}artefacts WHERE owner = $uid LIMIT 1");
+        if ($r && mysqli_num_rows($r) > 0) {
             $out[] = VAC_ERR_ARTIFACT;
-        }
-        if ($has("SELECT 1 FROM {$p}fdata f JOIN {$p}vdata v ON v.wref = f.vref WHERE v.owner = $uid AND f.f99t = 40 LIMIT 1")) {
-            $out[] = VAC_ERR_WW;
         }
         return $out;
     }

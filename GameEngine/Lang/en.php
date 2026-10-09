@@ -4584,8 +4584,6 @@ tz_def('VAC_ERR_NO_ROUND',           'Vacation is only available while a round w
 tz_def('VAC_ERR_WINDOW_OPEN',        'A vacation can only be booked while the play window is closed.');
 tz_def('VAC_ERR_LAST_WINDOW',        'The round ends before the next window.');
 tz_def('VAC_ERR_BOOKED',             'You already have a vacation booked.');
-tz_def('VAC_ERR_ATTACKS',            'Your attacks or raids are still under way.');
 tz_def('VAC_ERR_ARTIFACT',           'Artifact holders cannot take a vacation.');
-tz_def('VAC_ERR_WW',                 'Owners of a Wonder of the World cannot take a vacation.');
 // admin panel
 tz_def('ADMIN_ROUND_SETTINGS',       'Round settings');
