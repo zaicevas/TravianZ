@@ -80,6 +80,7 @@ trait DatabaseUserQueries {
         $id = $stmt->insert_id ?: $uid;
         $stmt->close();
         $this->updateUserField($id, "lang", $serverLang, 1);
+        $this->updateUserField($id, "timezone", 496, 1);   // Lithuania, whatever the column default
         $this->grantRegistrationGold($id);
         return $id;
     }
@@ -97,6 +98,7 @@ trait DatabaseUserQueries {
         $id = $stmt2->insert_id ?: $uid;
         $stmt2->close();
         $this->updateUserField($id, "lang", $serverLang, 1);
+        $this->updateUserField($id, "timezone", 496, 1);   // Lithuania, whatever the column default
         $this->grantRegistrationGold($id);
         return $id;
     }

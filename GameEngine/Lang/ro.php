@@ -1573,6 +1573,7 @@ tz_def('TIME_ZONE_L5', 'Asia/Bangkok');
 tz_def('TIME_ZONE_L6', 'SUA/New York');
 tz_def('TIME_ZONE_L7', 'SUA/Chicago');
 tz_def('TIME_ZONE_L8', 'Noua Zeelandă');
+tz_def('TIME_ZONE_LT', 'Lituania');
 tz_def('MONTH1', 'Ian');
 tz_def('MONTH2', 'Feb');
 tz_def('MONTH3', 'Mar');

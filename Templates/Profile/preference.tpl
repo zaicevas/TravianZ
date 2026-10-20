@@ -186,7 +186,7 @@ if (isset($_POST['v1']) || isset($_POST['v2']) || isset($_POST['timezone']) || i
     $v5 = isset($_POST['v5']) ? 1 : 0;
     $v6 = isset($_POST['v6']) ? 1 : 0;
 
-    $timezone = isset($_POST['timezone']) ? (int)$_POST['timezone'] : 1;
+    $timezone = isset($_POST['timezone']) ? (int)$_POST['timezone'] : 496;
     $tformat  = isset($_POST['tformat']) ? (int)$_POST['tformat'] : 0;
 
 // =========================
@@ -447,6 +447,7 @@ if(isset($_POST['lang']))
 <select name="timezone" class="dropdown">
 
 <optgroup label="local time zones">
+    <option value="496" <?php if($session->userinfo['timezone']==496) echo 'selected'; ?>><?php echo TIME_ZONE_LT; ?></option>
     <option value="495" <?php if($session->userinfo['timezone']==495) echo 'selected'; ?>><?php echo TIME_ZONE_L1; ?></option>
     <option value="99" <?php if($session->userinfo['timezone']==99) echo 'selected'; ?>><?php echo TIME_ZONE_L2; ?></option>
     <option value="492" <?php if($session->userinfo['timezone']==492) echo 'selected'; ?>><?php echo TIME_ZONE_L3; ?></option>

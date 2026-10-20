@@ -1628,6 +1628,7 @@ tz_def('TIME_ZONE_L5', 'Asia/Bangkok');
 tz_def('TIME_ZONE_L6', 'USA/New York');
 tz_def('TIME_ZONE_L7', 'USA/Chicago');
 tz_def('TIME_ZONE_L8', 'New Zealand');
+tz_def('TIME_ZONE_LT', 'Lituania');
 tz_def('TOO_LITTLE_GOLD', 'Too little gold');
 tz_def('TO_THE_TASK', 'To the task');
 tz_def('TWO_DAYS_OF_TRAVIAN', '2 days Travian ');

@@ -136,8 +136,9 @@ class MyGenerator
 	 * Resolve a player's "timezone" preference (issue #198) to a DateTimeZone.
 	 *
 	 * The preference form exposes two kinds of values:
-	 *   - 8 named, DST-aware regions (Europe, UK, Turkey, Kolkata, Bangkok,
-	 *     New York, Chicago, New Zealand) stored as their legacy magic ids;
+	 *   - 9 named, DST-aware regions (Lithuania, Europe, UK, Turkey, Kolkata,
+	 *     Bangkok, New York, Chicago, New Zealand) stored as magic ids;
+	 *     Lithuania (496) is the default for every account;
 	 *   - fixed UTC offsets (general zones): 0..11 => UTC+1..UTC+12,
 	 *     12..22 => UTC-11..UTC-1, 23 => UTC.
 	 * Falls back to the server's default timezone when the value is unknown.
@@ -154,6 +155,7 @@ class MyGenerator
 		$tz = (int) $tz;
 
 		$named = [
+			496 => 'Europe/Vilnius',
 			495 => 'Europe/Berlin',
 			99  => 'Europe/London',
 			492 => 'Europe/Istanbul',

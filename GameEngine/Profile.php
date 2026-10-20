@@ -106,7 +106,7 @@ class Profile {
 		$v6  = empty($post['v6'])  ? 0 : 1;
 
 		// Time preference: timezone index + date format (0..3).
-		$timezone = isset($post['timezone']) ? (int)$post['timezone'] : 1;
+		$timezone = isset($post['timezone']) ? (int)$post['timezone'] : 496;
 		$tformat  = isset($post['tformat'])  ? (int)$post['tformat']  : 0;
 		if ($tformat < 0 || $tformat > 3) {
 			$tformat = 0;

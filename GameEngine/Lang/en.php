@@ -1605,6 +1605,7 @@ tz_def('TIME_ZONE_L5', 'Asia/Bangkok');
 tz_def('TIME_ZONE_L6', 'USA/New York');
 tz_def('TIME_ZONE_L7', 'USA/Chicago');
 tz_def('TIME_ZONE_L8', 'New Zealand');
+tz_def('TIME_ZONE_LT', 'Lithuania');
 tz_def('MONTH1', 'Jan');
 tz_def('MONTH2', 'Feb');
 tz_def('MONTH3', 'Mar');

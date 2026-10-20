@@ -2175,7 +2175,7 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%users` (
   `v4` TINYINT(1) DEFAULT '0',
   `v5` TINYINT(1) DEFAULT '0',
   `v6` TINYINT(1) DEFAULT '0',
-  `timezone` INT DEFAULT '1',
+  `timezone` INT DEFAULT '496',
   `tformat` INT DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
