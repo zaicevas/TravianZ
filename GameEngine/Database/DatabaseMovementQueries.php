@@ -777,8 +777,9 @@ trait DatabaseMovementQueries {
             $id = [$id];
         }
 
-        foreach ($id as $index => $idValue) {
-            $id[$index] = (int) $idValue;
+        $id = array_filter(array_map('intval', $id));
+        if (empty($id)) {
+            return; // "IN()" is an SQL syntax error
         }
 
 		$q = "DELETE FROM " . TB_PREFIX . "prisoners WHERE id IN(".implode(', ', $id).")";

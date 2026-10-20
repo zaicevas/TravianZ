@@ -962,17 +962,23 @@ trait AutomationBattleResolution {
                 );
                 $prisoners2delete[] = $prisoner['id'];
             } else {
-                $p_alliance   = $database->getUserField($p_owner, "alliance", 0);
-                $friendarray  = $database->getAllianceAlly($p_alliance, 1);
-                $neutralarray = $database->getAllianceAlly($p_alliance, 2);
-                $friend  = ($friendarray[0]['alli1']  > 0 && $friendarray[0]['alli2']  > 0 && $p_alliance > 0)
-                         && ($friendarray[0]['alli1']  == $ownally || $friendarray[0]['alli2']  == $ownally)
-                         && ($ownally != $p_alliance && $ownally && $p_alliance);
-                $neutral = ($neutralarray[0]['alli1'] > 0 && $neutralarray[0]['alli2'] > 0 && $p_alliance > 0)
-                         && ($neutralarray[0]['alli1'] == $ownally || $neutralarray[0]['alli2'] == $ownally)
-                         && ($ownally != $p_alliance && $ownally && $p_alliance);
+                $p_alliance = $database->getUserField($p_owner, "alliance", 0);
+                // BUG FIXED: only the first pact row was read ($array[0]), which
+                // warned when the alliance had no pact and missed every pact
+                // after the first one. Any accepted pact (1 = confederacy,
+                // 2 = non-aggression) between the two alliances counts.
+                $pacted = false;
+                if ($ownally > 0 && $p_alliance > 0 && $ownally != $p_alliance) {
+                    foreach ([1, 2] as $pactType) {
+                        foreach ($database->getAllianceAlly($p_alliance, $pactType) as $pact) {
+                            if ($pact['alli1'] == $ownally || $pact['alli2'] == $ownally) {
+                                $pacted = true;
+                            }
+                        }
+                    }
+                }
 
-                if ($p_alliance == $ownally || $friend || $neutral) {
+                if (($p_alliance > 0 && $p_alliance == $ownally) || $pacted) {
                     $p_tribe = $database->getUserField($p_owner, "tribe", 0);
 
                     for ($i = 1; $i <= 11; $i++) {
@@ -1004,6 +1010,14 @@ trait AutomationBattleResolution {
                     $prisoners2delete[] = $prisoner['id'];
                 }
             }
+        }
+
+        // BUG FIXED: when every prisoner belongs to someone the attacker may
+        // not free, nothing is released. deletePrisoners([]) used to build
+        // "IN()" and the SQL error killed the whole automation tick, so the
+        // attack (and every movement after it) stayed stuck forever.
+        if (empty($prisoners2delete)) {
+            return '';
         }
 
         if (count($movementType)) {
