@@ -71,28 +71,14 @@ trait AutomationBattleResolution {
                 // update all that needs updating
                 $database->setVillageLevel($data['to'], $fieldsToSet, $fieldValuesToSet);
                 
-                // BUG FIXED: $tbgid is 0 when the catapult targets an already-empty field
-                // slot (nothing ever built there) - $newLevel==0 still runs this whole
-                // "destroyed" branch even though tblevel was already 0 (see the guard right
-                // above only skips the build-queue update, not this block). There is no
-                // "bid0" data array (building type IDs start at 1), so $GLOBALS["bid0"]
-                // doesn't exist -> "Undefined global variable $bid0". Null-coalescing keeps
-                // the exact same downstream result ($buildarray stays effectively empty,
-                // so the isset() check below is still false) without the warning.
-                $buildarray = $GLOBALS["bid".$tbgid] ?? null;
-
-                if ( is_array($buildarray) && isset( $buildarray[$newLevel] ) ) {
-                    // (great) warehouse level was changed
-                    if ($tbgid == 10 || $tbgid == 38) {
-                        $database->setMaxStoreForVillage($data['to'], $buildarray[$newLevel]['attri']);
-                    }
-
-                    // (great) granary level was changed
-                    if ($tbgid == 11 || $tbgid == 39) {
-                        $database->setMaxCropForVillage($data['to'], $buildarray[$newLevel]['attri']);
-                    }
+                // (great) warehouse/granary destroyed: rebuild maxstore/maxcrop from the
+                // remaining buildings. The old code looked up $bid10[0], which doesn't
+                // exist, so the caps never dropped; updateStore() skips villages with no
+                // storage building left, so losing both kept the old caps forever.
+                if (in_array($tbgid, [10, 11, 38, 39])) {
+                    $database->recalculateStorage($data['to']);
                 }
-                
+
                 // oasis cannot be destroyed
                 $pop = $this->recountPop($data['to'], false);
                 if ($isoasis == 0 && $pop == 0 && $can_destroy == 1) $village_destroyed = 1;
@@ -138,23 +124,17 @@ trait AutomationBattleResolution {
                 // building was damaged to a lower level
                 $info_cata = " ".rc_tok('RC_DAMAGED_FROM_TO', $tblevel, $newLevel);
                 
-                $buildarray = $GLOBALS["bid".$tbgid];
-                
-                // (great) warehouse level was changed
-                if ($tbgid == 10 || $tbgid == 38) {
-                    $database->setMaxStoreForVillage($data['to'], $buildarray[$newLevel]['attri']);
-                }
-                
-                // (great) granary level was changed
-                if ($tbgid == 11 || $tbgid == 39) {
-                    $database->setMaxCropForVillage($data['to'], $buildarray[$newLevel]['attri']);
-                }
-                
                 $fieldsToSet = ["f".$tbid];
                 $fieldValuesToSet = [$newLevel];
-                
+
                 $database->setVillageLevel($data['to'], $fieldsToSet, $fieldValuesToSet);
-                
+
+                // (great) warehouse/granary damaged: rebuild the caps from the new levels
+                // (the old code subtracted the new level's raw capacity, unscaled)
+                if (in_array($tbgid, [10, 11, 38, 39])) {
+                    $database->recalculateStorage($data['to']);
+                }
+
                 // recalculate population and check if the village shouldn't be destroyed at this point
                 $pop = $this->recountPop($data['to'], false);
                 if ($isoasis == 0) {
