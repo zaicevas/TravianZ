@@ -26,7 +26,8 @@
  *   - the daily play window: outside it, non-staff players cannot load in-game
  *     pages (Session.php) or call ajax.php. The world itself keeps running.
  *   - the weekly gold bonus, granted from the automation tick.
- *   - the hard round end: START_DATE + START_TIME + round_days. At the end a
+ *   - the hard round end: START_DATE + START_TIME + round_days, or earlier
+ *     when a player surrenders (declareSurrender). At the end a
  *     snapshot of the artifact holders is stored once (first automation tick
  *     after the end, before troop movements are processed), so later troop
  *     movements cannot change the result (results.php).
@@ -54,6 +55,7 @@ class RoundControl
     /** Internal (non-editable) keys. */
     const KEY_GOLD_PERIOD = 'weekly_gold_period';
     const KEY_SNAPSHOT    = 'final_snapshot';
+    const KEY_SURRENDER   = 'surrender';
 
     /** Artifact score per size: 1 = small, 2 = great, 3 = unique. */
     const SCORE = [1 => 1, 2 => 2, 3 => 3];
@@ -119,6 +121,7 @@ class RoundControl
 
     private static $settings = null;
     private static $snapshot = false;
+    private static $surrender = false;
 
     /* ---- Storage -------------------------------------------------------- */
 
@@ -162,6 +165,7 @@ class RoundControl
     {
         self::$settings = null;
         self::$snapshot = false;
+        self::$surrender = false;
     }
 
     /** All editable settings, validated, defaults filled in. Cached per request. */
@@ -423,14 +427,19 @@ class RoundControl
         return $date->getTimestamp();
     }
 
-    /** Hard round end, or 0 when the start is unknown. */
+    /** Hard round end (or the surrender, if earlier), 0 when the start is unknown. */
     public static function roundEnd($days = null)
     {
         $start = self::roundStart();
         if (!$start) {
             return 0;
         }
-        return self::addDays($start, $days === null ? (int) self::get('round_days') : (int) $days);
+        $end = self::addDays($start, $days === null ? (int) self::get('round_days') : (int) $days);
+        $surrender = $days === null ? self::getSurrender() : null;
+        if ($surrender !== null) {
+            $end = min($end, (int) $surrender['ended_at']);
+        }
+        return $end;
     }
 
     public static function isRoundOver($now = null)
@@ -930,7 +939,7 @@ class RoundControl
             return false;
         }
         try {
-            mysqli_query($link, "DELETE FROM " . self::table() . " WHERE `name` IN ('" . self::KEY_GOLD_PERIOD . "', '" . self::KEY_SNAPSHOT . "')");
+            mysqli_query($link, "DELETE FROM " . self::table() . " WHERE `name` IN ('" . self::KEY_GOLD_PERIOD . "', '" . self::KEY_SNAPSHOT . "', '" . self::KEY_SURRENDER . "')");
         } catch (\Throwable $e) {
             // table does not exist yet: nothing to clear
         }
@@ -1099,6 +1108,63 @@ class RoundControl
             return self::$snapshot;
         }
         return self::$snapshot = self::roundValue(self::getRaw(self::KEY_SNAPSHOT));
+    }
+
+    /** The surrender of this round, or null. */
+    public static function getSurrender()
+    {
+        if (self::$surrender !== false) {
+            return self::$surrender;
+        }
+        return self::$surrender = self::roundValue(self::getRaw(self::KEY_SURRENDER));
+    }
+
+    /**
+     * End the round now: $loserUid surrendered, alliance $winnerAid wins.
+     * The names are stored with it, so later renames or alliance changes do
+     * not move the result. The usual round end follows (results redirect,
+     * final snapshot on the next automation tick).
+     *
+     * @return true|string true, or an error message
+     */
+    public static function declareSurrender($winnerAid, $loserUid, $now = null)
+    {
+        $now  = $now === null ? time() : (int) $now;
+        $link = self::link();
+        if (!$link || !self::ensureSchema()) {
+            return 'No database connection.';
+        }
+        if (!self::hasStarted($now) || self::isRoundOver($now)) {
+            return 'The round is not running.';
+        }
+
+        $aid  = (int) $winnerAid;
+        $ally = mysqli_fetch_assoc(mysqli_query($link, "SELECT tag, name FROM `" . TB_PREFIX . "alidata` WHERE id = " . $aid));
+        $members = [];
+        $res = mysqli_query($link, "SELECT username FROM `" . TB_PREFIX . "users` WHERE alliance = " . $aid . " ORDER BY username");
+        while ($res && ($row = mysqli_fetch_assoc($res))) {
+            $members[] = (string) $row['username'];
+        }
+        if (!$ally || !$members) {
+            return 'Unknown alliance, or it has no members.';
+        }
+        $loser = mysqli_fetch_assoc(mysqli_query($link, "SELECT username, alliance FROM `" . TB_PREFIX . "users` WHERE id = " . (int) $loserUid));
+        if (!$loser || (int) $loser['alliance'] === $aid) {
+            return 'Unknown player, or a member of the winning alliance.';
+        }
+
+        $json = self::encodeSnapshot([
+            'round_start' => self::roundStart(),
+            'ended_at'    => $now,
+            'winner_tag'  => (string) $ally['tag'],
+            'winner_name' => (string) $ally['name'],
+            'members'     => $members,
+            'loser'       => (string) $loser['username'],
+        ]);
+        if ($json === false || !self::set(self::KEY_SURRENDER, $json)) {
+            return 'Could not store the surrender.';
+        }
+        return true;
     }
 
     /** JSON for the snapshot; invalid UTF-8 (e.g. in a village name) is replaced, never fatal. */

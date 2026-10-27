@@ -4556,6 +4556,8 @@ tz_def('RND_RESULTS_NONE',           'No player holds an artifact.');
 tz_def('RND_RESULTS_NATARS',         'Artifacts not scored (held by the Natars or by staff accounts): %d');
 tz_def('RND_RESULTS_WINNER',         'Winner of the round: %s');
 tz_def('RND_RESULTS_WINNER_ALLY',    'Winning alliance: %s');
+tz_def('RND_RESULTS_WINNER_MEMBERS', 'Members: %s');
+tz_def('RND_RESULTS_SURRENDERED',    '%s surrendered, which ended the round early.');
 tz_def('RND_RESULTS_POPULATION',     'Largest empires (population)');
 tz_def('RND_RESULTS_POP',            'Population');
 tz_def('RND_RESULTS_VILLAGES',       'Villages');

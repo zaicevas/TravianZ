@@ -37,6 +37,8 @@ $roundEnd = RoundControl::roundEnd();
 // the round runs the artifact holders stay secret, and right after the end
 // the page says the results are being finalised.
 $snapshot  = $ended ? RoundControl::getSnapshot() : null;
+// a surrender decides the round instead of the artifacts
+$surrender = $ended ? RoundControl::getSurrender() : null;
 $standings = $snapshot !== null ? $snapshot : ['artifacts' => [], 'population' => []];
 $ranking   = RoundControl::rank($standings);
 
@@ -67,18 +69,25 @@ include("Templates/Round/outgame_top.tpl");
 	<p id="rnd_finalising"><?php echo sprintf(RND_RESULTS_FINALISING, '<b>' . RoundControl::fmt($roundEnd) . '</b>'); ?></p>
 <?php } else { ?>
 	<p><?php echo sprintf(RND_RESULTS_ENDED, '<b>' . RoundControl::fmt($roundEnd) . '</b>'); ?></p>
-<?php     if (!empty($ranking['players'])) { ?>
+<?php     if ($surrender !== null) { ?>
+	<p id="rnd_surrender"><?php echo sprintf(RND_RESULTS_SURRENDERED, '<b>' . rnd_h($surrender['loser']) . '</b>'); ?></p>
+	<p class="rnd-big" id="rnd_winner"><?php echo sprintf(RND_RESULTS_WINNER_ALLY, rnd_h($surrender['winner_name'] . ' [' . $surrender['winner_tag'] . ']')); ?></p>
+	<p id="rnd_winner_members"><?php echo sprintf(RND_RESULTS_WINNER_MEMBERS, rnd_h(implode(', ', $surrender['members']))); ?></p>
+<?php     } elseif (!empty($ranking['players'])) { ?>
 	<p class="rnd-big" id="rnd_winner"><?php echo sprintf(RND_RESULTS_WINNER, rnd_h($ranking['players'][0]['username'])); ?></p>
 <?php     } ?>
-<?php     if (!empty($ranking['alliances'])) { ?>
+<?php     if ($surrender === null && !empty($ranking['alliances'])) { ?>
 	<p><b><?php echo sprintf(RND_RESULTS_WINNER_ALLY, rnd_h($ranking['alliances'][0]['tag'])); ?></b></p>
 <?php     } ?>
 <?php } ?>
+<?php if ($surrender === null) { ?>
 	<p><?php echo RND_RESULTS_SCORING; ?></p>
 	<p id="rnd_tiebreak"><?php echo RND_RESULTS_TIEBREAK; ?></p>
+<?php } ?>
 </div>
 
 <?php if ($snapshot !== null) { ?>
+<?php if ($surrender === null) { ?>
 <h2><?php echo RND_RESULTS_PLAYERS; ?></h2>
 <?php if (empty($ranking['players'])) { ?>
 <p><?php echo RND_RESULTS_NONE; ?></p>
@@ -155,6 +164,7 @@ include("Templates/Round/outgame_top.tpl");
 <?php     } ?>
 </table>
 <?php } ?>
+<?php } // artifact race ?>
 
 <?php if (!empty($standings['population'])) { ?>
 <h2><?php echo RND_RESULTS_POPULATION; ?></h2>
